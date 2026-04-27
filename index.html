@@ -1,0 +1,5407 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>40℃高溫即時調適行動演練 — 腳本協作平台</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      /* 主要背景 */
+      --bg-shell: #F7F6F3;
+      --bg-main: #FAFAF8;
+      --bg-card: #FFFFFF;
+
+      /* 側邊欄 */
+      --sidebar-bg: #1A1210;
+      --sidebar-hover: #2D1F1A;
+      --sidebar-active: #EA580C;
+      --sidebar-text: #D6D3D1;
+      --sidebar-muted: #78716C;
+      --sidebar-border: #292524;
+
+      /* 文字 */
+      --text-1: #1C1917;
+      --text-2: #57534E;
+      --text-3: #A8A29E;
+
+      /* 強調色（熱浪漸層） */
+      --accent-amber: #D97706;
+      --accent-orange: #EA580C;
+      --accent-red: #DC2626;
+      --accent-green: #16A34A;
+      --active-blue: #1D4ED8;
+
+      /* 卡片邊框 */
+      --border: #E7E5E4;
+      --border-hover: #D6D3D1;
+
+      /* 卡片色調 */
+      --card-blue-bg: #EFF6FF;
+      --card-blue-border: #60A5FA;
+      --card-yellow-bg: #FFFBEB;
+      --card-yellow-border: #FBBF24;
+      --card-green-bg: #F0FDF4;
+      --card-green-border: #4ADE80;
+
+      /* 陰影 */
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, .08), 0 1px 2px rgba(0, 0, 0, .04);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, .08), 0 2px 4px rgba(0, 0, 0, .04);
+      --shadow-lg: 0 10px 30px rgba(0, 0, 0, .1), 0 4px 8px rgba(0, 0, 0, .05);
+
+      /* Legacy compat */
+      --shadow: var(--shadow-sm);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Noto Sans TC', "Microsoft JhengHei", Arial, sans-serif;
+      background: var(--bg-shell);
+      color: var(--text-1);
+      font-size: 16px;
+      margin: 0;
+    }
+
+    /* ── App Shell ── */
+    .app-shell {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ═══════════════════════════════
+       SIDEBAR (#tabs)
+    ═══════════════════════════════ */
+    .tabs {
+      width: 240px;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 200;
+      background: var(--sidebar-bg);
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--sidebar-border);
+      overflow-y: auto;
+      overflow-x: hidden;
+      scrollbar-width: thin;
+      scrollbar-color: #3F3A37 transparent;
+      padding-bottom: 24px;
+    }
+
+    .tabs::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .tabs::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .tabs::-webkit-scrollbar-thumb {
+      background: #3F3A37;
+      border-radius: 2px;
+    }
+
+    /* Sidebar brand header */
+    .sidebar-brand {
+      padding: 20px 20px 16px;
+      border-bottom: 1px solid var(--sidebar-border);
+      flex-shrink: 0;
+    }
+
+    .sidebar-brand .brand-icon {
+      font-size: 28px;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .sidebar-brand .brand-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #FAFAF8;
+      line-height: 1.4;
+      letter-spacing: 0.3px;
+    }
+
+    .sidebar-brand .brand-sub {
+      font-size: 13px;
+      color: var(--sidebar-muted);
+      margin-top: 3px;
+      letter-spacing: 0.5px;
+    }
+
+    /* Sidebar navigation label */
+    .sidebar-nav-label {
+      padding: 16px 20px 8px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--sidebar-muted);
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    /* Tab items */
+    .tab {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 11px 20px;
+      cursor: pointer;
+      border-bottom: none;
+      border-left: 3px solid transparent;
+      transition: all 0.15s ease;
+      color: var(--sidebar-text);
+      white-space: normal;
+      min-width: unset;
+      text-align: left;
+      border-radius: 0;
+      gap: 3px;
+      font-size: 15px;
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+
+    .tab:hover {
+      background: var(--sidebar-hover);
+      color: #FAFAF8;
+      border-left-color: #57534E;
+    }
+
+    .tab.active {
+      background: rgba(234, 88, 12, 0.12);
+      color: #FB923C;
+      border-left-color: var(--sidebar-active);
+      font-weight: 700;
+    }
+
+    .tab .day {
+      display: block;
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--sidebar-muted);
+      margin-top: 0;
+    }
+
+    .tab.active .day {
+      color: #FDBA74;
+    }
+
+    /* ═══════════════════════════════
+       MAIN WRAPPER
+    ═══════════════════════════════ */
+    .main-wrapper {
+      margin-left: 240px;
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-shell);
+    }
+
+    /* ── Top bar / Header ── */
+    .header {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 28px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .header h1 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-1);
+      letter-spacing: 0.3px;
+    }
+
+    .header .sub {
+      font-size: 12px;
+      color: var(--text-3);
+      margin-top: 2px;
+    }
+
+    .header-sync {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-3);
+    }
+
+    /* ═══════════════════════════════
+       演練說明頁 (Phase 0)
+    ═══════════════════════════════ */
+    .intro-page {
+      padding: 28px 28px 40px;
+    }
+
+    .intro-hero {
+      background: linear-gradient(135deg, #1C1917 0%, #292524 50%, #44403C 100%);
+      border-radius: 14px;
+      padding: 40px 40px 36px;
+      color: #fff;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .intro-hero::before {
+      content: '';
+      position: absolute;
+      top: -60px;
+      right: -60px;
+      width: 240px;
+      height: 240px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(234, 88, 12, 0.15) 0%, transparent 70%);
+    }
+
+    .intro-hero::after {
+      content: '';
+      position: absolute;
+      bottom: -40px;
+      left: 35%;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(220, 38, 38, 0.1) 0%, transparent 70%);
+    }
+
+    .intro-hero .label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #FDBA74;
+      margin-bottom: 12px;
+      opacity: .9;
+    }
+
+    .intro-hero h2 {
+      font-size: 26px;
+      font-weight: 800;
+      line-height: 1.3;
+      margin-bottom: 12px;
+      color: #FAFAF8;
+    }
+
+    .intro-hero p {
+      font-size: 15px;
+      line-height: 1.8;
+      color: #D6D3D1;
+      white-space: pre-wrap;
+    }
+
+    .intro-task-box {
+      background: var(--bg-card);
+      border-radius: 10px;
+      border-left: 4px solid var(--accent-amber);
+      padding: 18px 22px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border);
+      border-left-width: 4px;
+    }
+
+    .intro-task-box h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--accent-orange);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .intro-task-box ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .intro-task-box ul li {
+      font-size: 14px;
+      line-height: 1.7;
+      padding: 5px 0 5px 20px;
+      position: relative;
+      color: var(--text-1);
+      border-bottom: 1px solid #F5F5F4;
+    }
+
+    .intro-task-box ul li:last-child {
+      border-bottom: none;
+    }
+
+    .intro-task-box ul li::before {
+      content: '▸';
+      position: absolute;
+      left: 0;
+      color: var(--accent-amber);
+      font-size: 12px;
+      top: 8px;
+    }
+
+    .intro-phases-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-2);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin: 20px 0 14px;
+    }
+
+    .intro-phases {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .phase-card {
+      background: var(--bg-card);
+      border-radius: 10px;
+      padding: 14px;
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+      border: 1px solid var(--border);
+      border-top: 3px solid #1976d2;
+      transition: transform .15s, box-shadow .15s, border-color .15s;
+    }
+
+    .phase-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .phase-card .pc-badge {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--active-blue);
+      background: #EFF6FF;
+      border-radius: 5px;
+      padding: 2px 7px;
+      display: inline-block;
+      margin-bottom: 7px;
+    }
+
+    .phase-card .pc-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-1);
+      margin-bottom: 4px;
+      line-height: 1.4;
+    }
+
+    .phase-card .pc-day {
+      font-size: 11px;
+      color: var(--text-3);
+    }
+
+    .phase-card .pc-desc {
+      font-size: 11.5px;
+      color: var(--text-2);
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    /* Phase card top border colors */
+    .pc-col1 {
+      border-top-color: #607d8b;
+    }
+
+    .pc-col2 {
+      border-top-color: #1976d2;
+    }
+
+    .pc-col3 {
+      border-top-color: #f57c00;
+    }
+
+    .pc-col4 {
+      border-top-color: #d84315;
+    }
+
+    .pc-col5 {
+      border-top-color: #b71c1c;
+    }
+
+    .pc-col6 {
+      border-top-color: #2e7d32;
+    }
+
+    .pc-col7 {
+      border-top-color: #6a1b9a;
+    }
+
+    .pc-col8 {
+      border-top-color: #37474f;
+    }
+
+    .intro-bg-box {
+      background: var(--bg-card);
+      border-radius: 10px;
+      padding: 18px 22px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 32px;
+      border: 1px solid var(--border);
+    }
+
+    .intro-bg-box h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--active-blue);
+      margin-bottom: 10px;
+    }
+
+    .intro-bg-box p {
+      font-size: 14px;
+      line-height: 1.85;
+      color: var(--text-1);
+      white-space: pre-wrap;
+    }
+
+    /* ═══════════════════════════════
+       Scenario Block (Phase 1-8)
+    ═══════════════════════════════ */
+    .scenario-wrapper {
+      padding: 20px 28px 8px;
+    }
+
+    .scenario-hero {
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 0;
+      box-shadow: var(--shadow-md);
+    }
+
+    .sh-top {
+      padding: 24px 28px 20px;
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .sh-top::before {
+      content: '';
+      position: absolute;
+      top: -40px;
+      right: -40px;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, .06);
+    }
+
+    .sh-top::after {
+      content: '';
+      position: absolute;
+      bottom: -30px;
+      left: 30%;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, .04);
+    }
+
+    .sh-badges {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sh-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 11px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, .18);
+      color: #fff;
+      letter-spacing: .5px;
+    }
+
+    .sh-title {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 10px;
+      line-height: 1.3;
+    }
+
+    .sh-summary {
+      font-size: 14px;
+      opacity: .9;
+      line-height: 1.75;
+      white-space: pre-wrap;
+    }
+
+    .sh-events {
+      background: #fff;
+      padding: 16px 20px;
+    }
+
+    .sh-events-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-3);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .sh-event-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 8px;
+    }
+
+    .sh-event-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: #F8F7F4;
+      border: 1px solid var(--border);
+    }
+
+    .sh-event-icon {
+      font-size: 18px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .sh-event-text {
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text-1);
+    }
+
+    /* Phase colour themes */
+    .theme-1 .sh-top {
+      background: linear-gradient(135deg, #37474f, #546e7a);
+    }
+
+    .theme-2 .sh-top {
+      background: linear-gradient(135deg, #0d47a1, #1976d2);
+    }
+
+    .theme-3 .sh-top {
+      background: linear-gradient(135deg, #e65100, #f57c00);
+    }
+
+    .theme-4 .sh-top {
+      background: linear-gradient(135deg, #bf360c, #d84315);
+    }
+
+    .theme-5 .sh-top {
+      background: linear-gradient(135deg, #b71c1c, #c62828);
+    }
+
+    .theme-6 .sh-top {
+      background: linear-gradient(135deg, #1b5e20, #2e7d32);
+    }
+
+    .theme-7 .sh-top {
+      background: linear-gradient(135deg, #4a148c, #6a1b9a);
+    }
+
+    .theme-8 .sh-top {
+      background: linear-gradient(135deg, #263238, #37474f);
+    }
+
+    /* ═══════════════════════════════
+       Filter Bar
+    ═══════════════════════════════ */
+    .filter-bar {
+      padding: 12px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 8px 28px 0;
+      width: auto;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .filter-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .filter-header label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-2);
+      white-space: nowrap;
+      margin-top: 5px;
+      letter-spacing: 0.3px;
+    }
+
+    .dept-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      flex: 1;
+    }
+
+    .dept-chip {
+      padding: 4px 12px;
+      background: #F5F5F4;
+      color: var(--text-2);
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      user-select: none;
+      transition: all 0.15s;
+    }
+
+    .dept-chip:hover {
+      background: #E7E5E4;
+      border-color: var(--border-hover);
+    }
+
+    .dept-chip.active {
+      background: var(--active-blue);
+      color: #fff;
+      border-color: var(--active-blue);
+      box-shadow: 0 1px 4px rgba(29, 78, 216, 0.2);
+    }
+
+    .filter-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+    }
+
+    .filter-bottom .check-label {
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      cursor: pointer;
+      color: var(--text-2);
+      font-weight: 600;
+      transition: color 0.15s;
+    }
+
+    .filter-bottom .check-label:hover {
+      color: var(--active-blue);
+    }
+
+    .filter-bottom .check-label input[type="checkbox"] {
+      cursor: pointer;
+      width: 15px;
+      height: 15px;
+      accent-color: var(--active-blue);
+    }
+
+    .stats {
+      font-size: 12px;
+      color: var(--text-3);
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ═══════════════════════════════
+       Cards
+    ═══════════════════════════════ */
+    .content {
+      width: 100%;
+      padding: 8px 28px 16px;
+    }
+
+    .section-divider {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--active-blue);
+      margin: 20px 0 10px;
+      padding: 8px 14px;
+      background: #EFF6FF;
+      border-left: 3px solid var(--active-blue);
+      border-radius: 4px;
+      letter-spacing: 0.3px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border-radius: 10px;
+      margin-bottom: 10px;
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-left: 4px solid #D6D3D1;
+      transition: box-shadow 0.15s, border-color 0.15s;
+    }
+
+    .card:hover {
+      box-shadow: var(--shadow-md);
+    }
+
+    .card.blue {
+      border-left-color: var(--card-blue-border);
+    }
+
+    .card.yellow {
+      border-left-color: var(--card-yellow-border);
+    }
+
+    .card.green {
+      border-left-color: var(--card-green-border);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: #FAFAF8;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: 12px;
+      padding: 2px 9px;
+      border-radius: 20px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .badge.event {
+      background: #EFF6FF;
+      color: #1D4ED8;
+      border: 1px solid #BFDBFE;
+    }
+
+    .badge.dept {
+      background: #FFF1F2;
+      color: #BE123C;
+      border: 1px solid #FECDD3;
+    }
+
+    .badge.dept-env {
+      background: #F0FDF4;
+      color: #15803D;
+      border: 1px solid #BBF7D0;
+    }
+
+    .badge.dept-mc {
+      background: #FAF5FF;
+      color: #7E22CE;
+      border: 1px solid #E9D5FF;
+    }
+
+    .badge.dept-local {
+      background: #FFF7ED;
+      color: #C2410C;
+      border: 1px solid #FED7AA;
+    }
+
+    .badge.editable-tag {
+      background: #FFFBEB;
+      color: #D97706;
+      border: 1px solid #FDE68A;
+    }
+
+    .badge.edited-tag {
+      background: #F0FDF4;
+      color: #16A34A;
+      border: 1px solid #BBF7D0;
+    }
+
+    .badge.fixed-tag {
+      background: #F5F5F4;
+      color: #78716C;
+      border: 1px solid #E7E5E4;
+    }
+
+    .card-body {
+      padding: 14px 16px;
+    }
+
+    .card-body.bg-blue {
+      background: var(--card-blue-bg);
+    }
+
+    .card-body.bg-yellow {
+      background: var(--card-yellow-bg);
+    }
+
+    .card-body.bg-green {
+      background: var(--card-green-bg);
+    }
+
+    .content-text {
+      white-space: pre-wrap;
+      line-height: 1.85;
+      font-size: 14.5px;
+      color: var(--text-1);
+    }
+
+    .edit-area {
+      width: 100%;
+      min-height: 110px;
+      border: 1.5px solid #FDE68A;
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-family: 'Noto Sans TC', "Microsoft JhengHei", sans-serif;
+      font-size: 14.5px;
+      line-height: 1.85;
+      resize: vertical;
+      background: #FFFEF7;
+      color: var(--text-1);
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .edit-area:focus {
+      outline: none;
+      border-color: var(--active-blue);
+      border-style: solid;
+      background: #FFFFFF;
+      box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.08);
+    }
+
+    .card-footer {
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      border-top: 1px solid var(--border);
+      background: #FAFAF8;
+    }
+
+    .btn {
+      padding: 5px 14px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+
+    .btn-reset {
+      background: #F5F5F4;
+      color: #78716C;
+      border: 1px solid var(--border);
+    }
+
+    .btn-reset:hover {
+      background: #E7E5E4;
+      color: var(--text-1);
+    }
+
+    .saved-indicator {
+      font-size: 12px;
+      color: var(--accent-green);
+      font-weight: 600;
+      margin-right: auto;
+      display: none;
+    }
+
+    .empty-msg {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--text-3);
+      font-size: 15px;
+    }
+
+    /* ═══════════════════════════════
+       Submit Bar
+    ═══════════════════════════════ */
+    .submit-bar {
+      padding: 20px 28px;
+      text-align: center;
+      background: var(--bg-card);
+      border-top: 1px solid var(--border);
+      margin-top: 16px;
+    }
+
+    .btn-submit {
+      padding: 12px 44px;
+      background: linear-gradient(135deg, #1D4ED8, #2563EB);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 2px 8px rgba(29, 78, 216, 0.3);
+      letter-spacing: 0.5px;
+      transition: all 0.2s;
+    }
+
+    .btn-submit:hover {
+      background: linear-gradient(135deg, #1E40AF, #1D4ED8);
+      box-shadow: 0 4px 14px rgba(29, 78, 216, 0.4);
+      transform: translateY(-1px);
+    }
+
+    .submit-note {
+      font-size: 12px;
+      color: var(--text-3);
+      margin-top: 6px;
+    }
+
+    /* ═══════════════════════════════
+       高溫40°C演練情境時序圖（嵌入演練說明）
+    ═══════════════════════════════ */
+    .ht-timeline {
+      background: #FDFBF8;
+      border-radius: 12px;
+      padding: 20px 24px 18px;
+      margin-bottom: 20px;
+      border: 1px solid #E8E4DE;
+    }
+
+    .ht-m-card {
+      border-color: #E8E4DE;
+    }
+
+    .ht-title {
+      text-align: center;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #2A2420;
+      margin-bottom: 4px;
+    }
+
+    .ht-sub {
+      text-align: center;
+      font-size: 11px;
+      color: #8C8480;
+      margin-bottom: 6px;
+      letter-spacing: 1px;
+    }
+
+    .ht-divider {
+      width: 60px;
+      height: 2px;
+      background: linear-gradient(90deg, #BA7517, #639922);
+      margin: 0 auto 14px;
+      border-radius: 1px;
+      opacity: .5;
+    }
+
+    .ht-sev-row {
+      position: relative;
+      height: 22px;
+      margin: 0 0 6px;
+    }
+
+    /* 隱藏原本的 line 和 arrow 子元素 */
+    .ht-sev-line {
+      display: none;
+    }
+
+    .ht-sev-arrow {
+      display: none;
+    }
+
+    /* 用 ::after 繪製完整漸層箭頭，箭身與箭頭共享同一漸層色帶 */
+    .ht-sev-row::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg,
+          #BA7517 0%,
+          #D85A30 38%,
+          #E24B4A 68%,
+          #639922 100%);
+      clip-path: polygon(0 32%,
+          calc(100% - 26px) 32%,
+          calc(100% - 26px) 0%,
+          100% 50%,
+          calc(100% - 26px) 100%,
+          calc(100% - 26px) 68%,
+          0 68%);
+    }
+
+    .ht-sev-labels {
+      display: flex;
+      margin: 0 0 12px;
+    }
+
+    .ht-sev-label {
+      flex: 1;
+      text-align: center;
+      font-size: 10px;
+    }
+
+    .ht-sev-label span {
+      display: block;
+      height: 3px;
+      border-radius: 2px;
+      margin: 0 8px 4px;
+      opacity: .8;
+    }
+
+    .ht-sl0 span {
+      background: #BA7517;
+    }
+
+    .ht-sl0 {
+      color: #854F0B;
+    }
+
+    .ht-sl1 span {
+      background: #D85A30;
+    }
+
+    .ht-sl1 {
+      color: #993C1D;
+    }
+
+    .ht-sl2 span {
+      background: #E24B4A;
+    }
+
+    .ht-sl2 {
+      color: #A32D2D;
+    }
+
+    .ht-sl3 span {
+      background: #639922;
+    }
+
+    .ht-sl3 {
+      color: #3B6D11;
+    }
+
+    .ht-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+      align-items: stretch;
+    }
+
+    .ht-phase {
+      border-radius: 10px;
+      overflow: hidden;
+      background: #FEFCFA;
+      border: 1px solid #E8E4DE;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .ht-phase-head {
+      padding: 8px 10px 6px;
+      text-align: center;
+    }
+
+    .ht-phase-day {
+      font-size: 12px;
+      font-weight: 600;
+      margin: 0 0 1px;
+    }
+
+    .ht-phase-label {
+      font-size: 10px;
+      margin: 0;
+      opacity: .75;
+    }
+
+    .ht-phase-temp {
+      text-align: center;
+      font-size: 22px;
+      font-weight: 500;
+      padding: 5px 8px;
+      margin: 0 8px;
+      border-radius: 8px;
+    }
+
+    .ht-events {
+      padding: 6px 6px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+    }
+
+    .ht-ev-card {
+      background: #FAF8F5;
+      border-radius: 6px;
+      padding: 5px 8px;
+      font-size: 11px;
+      line-height: 1.55;
+      border: 1px solid #E8E4DE;
+      color: #3A3530;
+    }
+
+    .ht-p0 .ht-phase-head {
+      background: #FAEEDA;
+    }
+
+    .ht-p0 .ht-phase-day {
+      color: #633806;
+    }
+
+    .ht-p0 .ht-phase-label {
+      color: #854F0B;
+    }
+
+    .ht-p0 .ht-phase-temp {
+      background: #FAC775;
+      color: #412402;
+    }
+
+    .ht-p1 .ht-phase-head {
+      background: #FAECE7;
+    }
+
+    .ht-p1 .ht-phase-day {
+      color: #4A1B0C;
+    }
+
+    .ht-p1 .ht-phase-label {
+      color: #993C1D;
+    }
+
+    .ht-p1 .ht-phase-temp {
+      background: #F0997B;
+      color: #4A1B0C;
+    }
+
+    .ht-p2 .ht-phase-head {
+      background: #FCEBEB;
+    }
+
+    .ht-p2 .ht-phase-day {
+      color: #501313;
+    }
+
+    .ht-p2 .ht-phase-label {
+      color: #A32D2D;
+    }
+
+    .ht-p2 .ht-phase-temp {
+      background: #F09595;
+      color: #501313;
+    }
+
+    .ht-p3 .ht-phase-head {
+      background: #EAF3DE;
+    }
+
+    .ht-p3 .ht-phase-day {
+      color: #173404;
+    }
+
+    .ht-p3 .ht-phase-label {
+      color: #3B6D11;
+    }
+
+    .ht-p3 .ht-phase-temp {
+      background: #C0DD97;
+      color: #173404;
+    }
+
+    .ht-dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      margin-right: 4px;
+      vertical-align: middle;
+      flex-shrink: 0;
+    }
+
+    .ht-dot-infra {
+      background: #8C887E;
+    }
+
+    .ht-dot-health {
+      background: #C8503A;
+    }
+
+    .ht-dot-monitor {
+      background: #2A9E84;
+    }
+
+    .ht-dot-energy {
+      background: #B87C10;
+    }
+
+    .ht-dot-urban {
+      background: #4E8E28;
+    }
+
+    .ht-dot-food {
+      background: #6A9A28;
+    }
+
+    .ht-dot-eco {
+      background: #1A9070;
+    }
+
+    .ht-dot-culture {
+      background: #C06840;
+    }
+
+    .ht-dot-water {
+      background: #3474A8;
+    }
+
+    .ht-dot-capacity {
+      background: #9A8030;
+    }
+
+    .ht-dot-recover {
+      background: #2E6A10;
+    }
+
+    .ht-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      padding: 10px 0;
+      margin-bottom: 14px;
+      border-top: 1px solid #E2DDD8;
+      border-bottom: 1px solid #E2DDD8;
+    }
+
+    .ht-leg-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      color: #6A6460;
+    }
+
+    .ht-measures-title {
+      text-align: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: #2A2420;
+      margin-bottom: 10px;
+      letter-spacing: 1px;
+    }
+
+    .ht-measures-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+    }
+
+    .ht-m-card {
+      border-radius: 8px;
+      overflow: hidden;
+      background: #FFFFFF;
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .ht-m-card-head {
+      padding: 6px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .ht-m-card-body {
+      padding: 4px 8px 7px;
+      font-size: 10.5px;
+      line-height: 1.65;
+      color: #4A4540;
+      flex: 1;
+    }
+
+    .ht-m-card-body div {
+      padding: 3px 0;
+      border-bottom: 1px dashed #E2DDD8;
+    }
+
+    .ht-m-card-body div:last-child {
+      border-bottom: none;
+    }
+
+    /* 統一暖土色系 — 各類別標頭 */
+    .ht-mi .ht-m-card-head {
+      background: #D0CCBF;
+      color: #2A2820;
+    }
+
+    /* 維生基礎設施 — 暖石灰 */
+    .ht-mh .ht-m-card-head {
+      background: #F2C0A8;
+      color: #5A1A0C;
+    }
+
+    /* 健康        — 珊瑚橘 */
+    .ht-mm .ht-m-card-head {
+      background: #A8D4C4;
+      color: #0C3830;
+    }
+
+    /* 高溫監控預警 — 暖青 */
+    .ht-me .ht-m-card-head {
+      background: #EEC870;
+      color: #3E2400;
+    }
+
+    /* 能源及產業   — 琥珀金 */
+    .ht-mu .ht-m-card-head {
+      background: #BBCE98;
+      color: #1E3810;
+    }
+
+    /* 都市環境改善 — 鼠尾草綠 */
+    .ht-mf .ht-m-card-head {
+      background: #C0CE88;
+      color: #2A3C0A;
+    }
+
+    /* 糧食        — 橄欖黃綠 */
+    .ht-mc .ht-m-card-head {
+      background: #9ECDB8;
+      color: #0A3828;
+    }
+
+    /* 生態        — 森林青 */
+    .ht-mcu .ht-m-card-head {
+      background: #E8AC88;
+      color: #521C0E;
+    }
+
+    /* 文化資產     — 赭土橘 */
+    .ht-mw .ht-m-card-head {
+      background: #A8CCDC;
+      color: #0E2E42;
+    }
+
+    /* 水資源      — 霧藍（去飽和，不冷） */
+    .ht-mk .ht-m-card-head {
+      background: #D4BF88;
+      color: #3A2800;
+    }
+
+    /* 能力建構     — 暖金棕（取代紫色） */
+
+    /* ═══════════════════════════════
+       Responsive
+    ═══════════════════════════════ */
+    @media (max-width: 1100px) {
+
+      /* Sidebar 回到水平 tabs */
+      .tabs {
+        position: sticky;
+        top: 0;
+        width: 100%;
+        height: auto;
+        min-height: unset;
+        flex-direction: row;
+        overflow-x: auto;
+        overflow-y: hidden;
+        border-right: none;
+        border-bottom: 2px solid var(--sidebar-border);
+        z-index: 99;
+        scrollbar-width: none;
+      }
+
+      .tabs::-webkit-scrollbar {
+        display: none;
+      }
+
+      .sidebar-brand,
+      .sidebar-nav-label,
+      .sidebar-footer {
+        display: none;
+      }
+
+      .tab {
+        flex-direction: column;
+        padding: 10px 8px;
+        font-size: 13px;
+        min-width: 80px;
+        border-left: none;
+        border-bottom: 3px solid transparent;
+        white-space: nowrap;
+        align-items: center;
+        text-align: center;
+      }
+
+      .tab.active {
+        border-left: none;
+        border-bottom-color: var(--sidebar-active);
+        background: rgba(234, 88, 12, .08);
+        color: var(--accent-orange);
+      }
+
+      .tab .day {
+        color: #9CA3AF;
+      }
+
+      .main-wrapper {
+        margin-left: 0;
+      }
+
+      .header {
+        top: auto;
+      }
+
+      .app-shell {
+        flex-direction: column;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .intro-phases {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .intro-hero {
+        padding: 24px 20px;
+      }
+
+      .intro-hero h2 {
+        font-size: 20px;
+      }
+
+      .sh-title {
+        font-size: 17px;
+      }
+
+      .sh-event-list {
+        grid-template-columns: 1fr;
+      }
+
+      .content {
+        padding: 10px;
+      }
+
+      .filter-bar {
+        padding: 10px 12px;
+        width: calc(100% - 16px);
+      }
+
+      .ht-measures-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .ht-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .header h1 {
+        font-size: 14px;
+      }
+
+      .header {
+        padding: 12px 16px;
+      }
+    }
+
+    /* ═══════════════════════════════
+       ADMIN MODE (?admin=1)
+    ═══════════════════════════════ */
+    .admin-banner {
+      display: none;
+      background: linear-gradient(135deg, #7c2d12, #9a3412);
+      color: #fff;
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .admin-banner .ab-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .admin-banner .ab-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .admin-banner button {
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .admin-banner button:hover {
+      background: rgba(255, 255, 255, 0.28);
+    }
+
+    .admin-banner button.active {
+      background: #fff;
+      color: #7c2d12;
+      font-weight: 700;
+    }
+
+    body:not(.admin) .admin-banner {
+      display: none !important;
+    }
+
+    /* Drag handle — only visible in admin mode */
+    .card .drag-handle {
+      display: none;
+      position: absolute;
+      left: 6px;
+      top: 8px;
+      width: 26px;
+      height: 34px;
+      background: linear-gradient(135deg, #ea580c, #c2410c);
+      color: #fff;
+      border-radius: 5px;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+      font-size: 16px;
+      font-weight: bold;
+      user-select: none;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+      z-index: 10;
+    }
+
+    .card .drag-handle:hover {
+      background: linear-gradient(135deg, #c2410c, #9a3412);
+    }
+
+    .card .drag-handle:active {
+      cursor: grabbing;
+    }
+
+    body.admin .card {
+      position: relative;
+      padding-left: 44px;
+    }
+
+    body.admin .card .drag-handle {
+      display: flex;
+    }
+
+    /* Delete / restore buttons — only visible in admin mode */
+    .card .admin-actions {
+      display: none;
+    }
+
+    body.admin .card .admin-actions {
+      display: inline-flex;
+      gap: 6px;
+      margin-left: auto;
+      align-items: center;
+    }
+
+    .card .admin-actions button {
+      background: #fff;
+      border: 1px solid #e7e5e4;
+      border-radius: 4px;
+      padding: 4px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      color: #57534e;
+      transition: all 0.15s ease;
+    }
+
+    .card .admin-actions .btn-del:hover {
+      background: #fee2e2;
+      border-color: #fca5a5;
+      color: #b91c1c;
+    }
+
+    .card .admin-actions .btn-restore {
+      background: #ecfdf5;
+      border-color: #86efac;
+      color: #166534;
+    }
+
+    .card .admin-actions .btn-restore:hover {
+      background: #d1fae5;
+    }
+
+    /* Deleted card styling */
+    .card.is-deleted {
+      opacity: 0.5;
+      background: #f5f5f4;
+      position: relative;
+    }
+
+    .card.is-deleted::before {
+      content: "已刪除";
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: #dc2626;
+      color: #fff;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      z-index: 5;
+    }
+
+    .card.is-deleted .card-body,
+    .card.is-deleted .card-header .badge:not(.edited-tag) {
+      text-decoration: line-through;
+    }
+
+    /* SortableJS feedback */
+    .sortable-ghost {
+      opacity: 0.3;
+      background: #fef3c7 !important;
+    }
+
+    .sortable-chosen {
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    }
+
+    .sortable-drag {
+      opacity: 0.9;
+    }
+
+    /* Structural sync badge */
+    #structSyncBadge {
+      display: none;
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      z-index: 500;
+      background: rgba(234, 88, 12, 0.9);
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 14px;
+      font-size: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+</head>
+
+<body>
+  <div class="app-shell">
+    <!-- Sidebar nav (#tabs) — JS will populate tab items inside -->
+    <div class="tabs" id="tabs">
+      <div class="sidebar-brand">
+        <div class="brand-icon">🌡️</div>
+        <div class="brand-title">40℃ 高溫演練</div>
+        <div class="brand-sub">腳本協作平台 · 115年度</div>
+      </div>
+      <div class="sidebar-nav-label">演練階段</div>
+      <!-- JS-injected tab items go here -->
+    </div>
+
+    <!-- Main content wrapper -->
+    <div class="main-wrapper">
+      <div class="header">
+        <div>
+          <h1>40℃ 高溫即時調適行動演練</h1>
+          <div class="sub">跨部會腳本協作平台</div>
+        </div>
+        <div class="header-sync" id="headerSyncBadge"></div>
+      </div>
+
+      <div class="admin-banner" id="adminBanner">
+        <div class="ab-left">
+          <span>🛠️ 管理模式</span>
+          <span style="font-size:12px;opacity:0.85;">可拖拉卡片調整順序、刪除不需要的區塊</span>
+        </div>
+        <div class="ab-actions">
+          <button id="toggleShowDeleted">顯示已刪除</button>
+          <button id="adminExit">離開管理模式</button>
+        </div>
+      </div>
+
+      <div id="structSyncBadge">🔄 結構同步中...</div>
+
+      <div id="scenarioWrapper"></div>
+
+      <div class="filter-bar" id="filterBar">
+        <div class="filter-header">
+          <label>篩選部會：</label>
+          <div class="dept-chips" id="deptChips">
+            <!-- Chips will be generated here -->
+          </div>
+        </div>
+        <div class="filter-bottom">
+          <label class="check-label">
+            <input type="checkbox" id="editableOnly"> 僅顯示待填寫
+          </label>
+          <div class="stats" id="stats"></div>
+        </div>
+      </div>
+
+      <div class="content" id="content"></div>
+
+      <div class="submit-bar" id="submitBar">
+        <button class="btn-submit" onclick="handleSubmit()">送出腳本</button>
+        <div class="submit-note">送出後將更新至雲端資料庫</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ★ 新增卡片 Modal（僅管理模式） -->
+  <div id="addCardModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:2000; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:12px; padding:28px 32px; width:min(560px,92vw); max-height:90vh; overflow-y:auto; box-shadow:0 8px 40px rgba(0,0,0,0.25); position:relative;">
+      <button onclick="closeAddCardModal()" style="position:absolute; top:14px; right:18px; background:none; border:none; font-size:22px; cursor:pointer; color:#999; line-height:1;">×</button>
+      <h3 style="margin:0 0 20px; font-size:17px; font-weight:700; color:#1a237e;">＋ 新增卡片</h3>
+
+      <div style="display:grid; gap:14px;">
+        <div>
+          <label style="font-size:13px; font-weight:600; color:#555; display:block; margin-bottom:5px;">階段</label>
+          <select id="acPhase" style="width:100%; padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:14px; background:#fafafa;">
+          </select>
+        </div>
+        <div>
+          <label style="font-size:13px; font-weight:600; color:#555; display:block; margin-bottom:5px;">事件 / 項目名稱</label>
+          <input id="acEvent" type="text" placeholder="例：行動規劃、成果回報…" style="width:100%; padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:14px; box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="font-size:13px; font-weight:600; color:#555; display:block; margin-bottom:5px;">負責部會</label>
+          <div style="display:flex; gap:8px;">
+            <select id="acDeptSelect" style="flex:1; padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:14px; background:#fafafa;" onchange="onDeptSelectChange()">
+              <option value="">— 從現有單位選擇 —</option>
+            </select>
+            <input id="acDeptCustom" type="text" placeholder="或自行輸入新單位" style="flex:1; padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:14px; box-sizing:border-box;">
+          </div>
+        </div>
+        <div>
+          <label style="font-size:13px; font-weight:600; color:#555; display:block; margin-bottom:5px;">演練內容 <span style="font-weight:400; color:#aaa;">（可留空，讓單位自行填寫）</span></label>
+          <textarea id="acContent" rows="5" placeholder="請輸入演練腳本內容…" style="width:100%; padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:14px; resize:vertical; box-sizing:border-box; font-family:inherit;"></textarea>
+        </div>
+        <div>
+          <label style="font-size:13px; font-weight:600; color:#555; display:block; margin-bottom:5px;">卡片類型</label>
+          <div style="display:flex; gap:10px;">
+            <label style="display:flex; align-items:center; gap:5px; font-size:14px; cursor:pointer;">
+              <input type="radio" name="acFill" value="yellow" checked> <span style="background:#fff9c4; border:1px solid #f0c04080; padding:2px 10px; border-radius:10px; font-size:12px; font-weight:600; color:#f57f17;">● 待填寫</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:5px; font-size:14px; cursor:pointer;">
+              <input type="radio" name="acFill" value="blue"> <span style="background:#e3f2fd; border:1px solid #90caf980; padding:2px 10px; border-radius:10px; font-size:12px; font-weight:600; color:#1565c0;">固定腳本</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:22px; display:flex; gap:10px; justify-content:flex-end;">
+        <button onclick="closeAddCardModal()" style="padding:9px 20px; border:1px solid #ddd; border-radius:6px; background:#f5f5f5; font-size:14px; cursor:pointer;">取消</button>
+        <button onclick="submitAddCard()" style="padding:9px 24px; border:none; border-radius:6px; background:linear-gradient(135deg,#1b5e20,#2e7d32); color:#fff; font-size:14px; font-weight:600; cursor:pointer;">新增卡片</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const DATA = {
+      "phases": [
+        {
+          "phase": 0,
+          "title": "演練說明"
+        },
+        {
+          "phase": 1,
+          "title": "一、演練準備階段(高溫預警)DAY-2、DAY-1"
+        },
+        {
+          "phase": 2,
+          "title": "二、召開高溫調適行動會議DAY0"
+        },
+        {
+          "phase": 3,
+          "title": "三、40℃高溫-初步失能徵兆DAY0"
+        },
+        {
+          "phase": 4,
+          "title": "四、40℃高溫損害累積DAY1"
+        },
+        {
+          "phase": 5,
+          "title": "五、40℃高溫-災情惡化DAY2"
+        },
+        {
+          "phase": 6,
+          "title": "六、高溫緊急危害狀況解除DAY3"
+        },
+        {
+          "phase": 7,
+          "title": "七、調適行動演練結束(評核階段)"
+        },
+        {
+          "phase": 8,
+          "title": "八、實兵演練階段"
+        },
+        {
+          "phase": 9,
+          "title": "匯出演練腳本"
+        }
+      ],
+      "entries": [
+        {
+          "row": 2,
+          "phase": 0,
+          "id": "0.2",
+          "event": "演練階段說明",
+          "dept": "司儀",
+          "content": "今日高溫調適行動演練重點，主要可分為8個階段。\n\n階段一、將以口述的方式，說明本次演練情境與DAY-1、DAY-2預警階段，包含模擬氣象署高溫預警與各部會整備；\n\n階段二、將模擬40℃DAY0環境部、氣象署及相關部會，及地方政府召開高溫調適行動會議，各權責單位說明高溫調適應處措施規劃，\n\n階段三、40℃高溫-初步失能徵兆DAY0，各區出現初步失能事件徵兆；\n\n階段四、模擬40℃持續之DAY1，損害累積，部分地區開始出現高溫危害災害事件(停電、交通)。\n\n階段五、模擬40℃持續之DAY2，災情惡化階段，大量熱傷害急診病患湧入醫療院所，醫療量能過載\n\n階段六、DAY3溫度下降，各地危害事件狀況解除，環境部與各單位針對此次事件進行檢討，並納入後續調適方針。\n\n階段七、演練結束，請長官及評核官針對此次演練進行評分，並邀請各部會就自身表現自評。\n\n階段八、實兵演練階段、由環境部、衛福部、地方政府針對DAY2醫療體系過載情境進行緊急調適行動實兵演練。",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": true
+        },
+        {
+          "row": 6,
+          "phase": 1,
+          "id": "1.1",
+          "event": "演練開始",
+          "dept": "司儀",
+          "content": "演練階段一、高溫預警階段",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": true
+        },
+        {
+          "row": 7,
+          "phase": 1,
+          "id": "1.2",
+          "event": "高溫預警\nDAY-2、DAY-1",
+          "dept": "司儀",
+          "content": "•北台灣地區受到太平洋副熱帶高壓影響，大氣沉降增溫，雲量減少，地面受到更多的太陽輻射，加上由於都市熱島效應與盆地地形蓄熱，使得北部地區出現連日高溫。\n\n•連續兩日之高溫影響下，氣象署於前日(D-2)發布橙燈預警，於今日(D-1)18:00發布台北市、新北市、桃園市明日為紅燈預警，氣溫有機會達到40℃以上；環境部氣候署根據此預報結果，於高溫調適行動群組通知各部會明日(D0)上午10:00將進行高溫調適行動會議。\n\n•用電需求增加，供應五股區、內湖區、蘆竹區工業區之變電所開始出現過載預警。",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": true
+        },
+        {
+          "row": 9,
+          "phase": 2,
+          "id": "2.1",
+          "event": "演練階段說明",
+          "dept": "司儀",
+          "content": "演練階段二、召開高溫調適行動會議DAY0\n\n由於前一日氣象署預測台北市、新北市、桃園市部分地區氣溫有機會達到40℃以上，環境部氣候署於上午召開高溫調適行動會議。",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": true
+        },
+        {
+          "row": 10,
+          "phase": 2,
+          "id": "2.2",
+          "event": "高溫情境說明",
+          "dept": "司儀",
+          "content": "氣象署於台北市內湖區、新北市五股區、桃園市蘆竹區測站測到40℃，將於今日上午10:00由環境部召開之高溫調適行動會議進行詳細說明。",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": true
+        },
+        {
+          "row": 11,
+          "phase": 2,
+          "id": "2.3",
+          "event": "召開會議",
+          "dept": "主推官",
+          "content": "稍早氣象署監測顯示台北市內湖區、新北市五股區、桃園市蘆竹區測站測到40℃，為因應40℃可能導致後續高溫災害事件發生，請各部會說明今日調適行動措施，首先請氣象署說明目前狀況。",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 12,
+          "phase": 2,
+          "id": "2.4",
+          "event": "氣溫監測及通知",
+          "dept": "交通部氣象署",
+          "content": "氣象署於今日(D0)稍早觀測到台北市內湖區、新北市五股區、桃園市蘆竹區測站出現40℃高溫，並發布高溫「紅色」燈號。\n同時本署同步於全國健康氣象預警平臺(樂活氣象App)發布熱傷害預警分級及分眾防護資訊（含一般民眾及易感族群等）。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 13,
+          "phase": 2,
+          "id": "2.5",
+          "event": "指派說明",
+          "dept": "主推官",
+          "content": "請環境部氣候署說明今日實施之調適行動措施規劃",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 14,
+          "phase": 2,
+          "id": "2.6",
+          "event": "行動規劃",
+          "dept": "環境部氣候署",
+          "content": "1.與地方政府合作，規劃指定避暑設施，為弱勢族群提供避暑場所。(環境部)\n2.公開高溫涼適地圖，提供一般民眾短時間避暑場域點位。(環境部)\n3.建立極端高溫災害調適行動機制，提高城市韌性。(環境部)",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 15,
+          "phase": 2,
+          "id": "2.7",
+          "event": "指派說明",
+          "dept": "主推官",
+          "content": "請環境管理署說明今日高溫調適行動措施規劃",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 16,
+          "phase": 2,
+          "id": "2.8",
+          "event": "行動規劃",
+          "dept": "環境部環管署",
+          "content": "針對今日高溫警戒，本署已主動掌握高溫影響縣市清潔隊實際作業情形，並請各地方環保局持續協同監控，確保隊員落實補水、休息與防曬等基本防護措施。同時也強化資訊即時回報，務求清潔隊在高溫環境中「能作業、也安全」。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 17,
+          "phase": 2,
+          "id": "2.9",
+          "event": "指派說明",
+          "dept": "主推官",
+          "content": "請資源循環署說明今日高溫調適行動措施規劃",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 18,
+          "phase": 2,
+          "id": "2.10",
+          "event": "行動規劃",
+          "dept": "環境部循環署",
+          "content": "本署將持續關懷已造冊之相關個體資收戶實際作業情形，並請環保局持續協同掌握，以提醒資源回收工作人員要採取高溫相關防護作為，並適當補水與休息。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 19,
+          "phase": 2,
+          "id": "2.11",
+          "event": "指派說明",
+          "dept": "主推官",
+          "content": "請勞動部說明今日高溫調適行動措施規劃",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 20,
+          "phase": 2,
+          "id": "2.12",
+          "event": "行動規劃",
+          "dept": "勞動部職安署",
+          "content": "北北桃大部分地區熱危害風險已達第二級。職安署加強宣導，並動員勞動檢查員擴大檢查。事業單位可依勞動部建置之高氣溫戶外作業熱危害預防行動資訊網，透過線上取得工作所在地的氣象數據資訊，以即時計算熱指數，評估及採取相關應對措施，期能降低高溫對勞工健康造成衝擊。\n本署將透過官網、各社群媒體提醒雇主應採取必要熱危害防護措施，並協調轄區勞動檢查機構督導事業單位辦理高溫作業熱危害防護措施。本署將持續掌握中央氣象署高溫資訊，適時採取相關調適行動措施。\n協同環境部、交通部加強戶外工作人員防護與關懷，並提供避暑設施、飲水及延長午休等高溫防護措施和健康管理。\n依對象宣導預防熱傷害及建置相關資訊平台。\n透過官網與社群提醒雇主落實防熱措施，並由勞檢機構督導事業單位。\n擴大執行高溫勞檢。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 21,
+          "phase": 2,
+          "id": "2.13",
+          "event": "指派說明",
+          "dept": "主推官",
+          "content": "請衛福部說明今日實施之調適行動措施規劃",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 22,
+          "phase": 2,
+          "id": "2.14",
+          "event": "行動規劃",
+          "dept": "衛福部",
+          "content": "衛生福利部說明：\n本部主要持續關注醫療體系及相關社福系統運作。\n臺北區緊急醫療調適行動中心(EOC)及北區緊急醫療調適行動中心持續掌握並分配轄區緊急醫療資源量能。\n提供預防高溫熱傷害宣導資訊，提醒民眾留心熱傷害等症狀，另要確保醫療機構隨時準備應對熱傷害相關的健康問題，提供必要的醫療支援，並加強通知醫院急診室及各衛生中心之醫護人員啟動高溫醫療機制、口服電解質液和葡萄糖等庫存，同時，要求醫院盤點各項設施設備之耐熱運轉上限，及確認備援發電機運作正常。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 23,
+          "phase": 2,
+          "id": "2.15",
+          "event": "指派說明",
+          "dept": "主推官",
+          "content": "請衛福部疾管署說明今日實施之調適行動措施規劃",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 24,
+          "phase": 2,
+          "id": "2.16",
+          "event": "行動規劃",
+          "dept": "衛福部疾管署",
+          "content": "疾管署「即時疫情監視及預警系統(RODS)」對熱急症就醫人次監測說明，北北桃部分醫院人次已呈現高值，其中重症人次為＿，年齡分布以高齡居多。本署同步開放資料供各界使用，並推動與地方縣市連結，共同提升民眾自我警覺及保護力。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 25,
+          "phase": 2,
+          "id": "2.17",
+          "event": "指派說明",
+          "dept": "主推官",
+          "content": "請交通部說明今日實施之調適行動措施規劃",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 26,
+          "phase": 2,
+          "id": "2.18",
+          "event": "行動規劃",
+          "dept": "交通部",
+          "content": "評估高溫對既有公共設施(如橋樑、道路)結構安全的影響，並進行必要的維護和加固。\n強化公共運輸場站的降溫措施。\n建立即時預警機制，超過55℃/56℃即啟動巡檢與列車降速，並持續監測至降溫。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 27,
+          "phase": 2,
+          "id": "2.19",
+          "event": "指派說明",
+          "dept": "主推官",
+          "content": "請農業部說明今日實施之調適行動措施規劃",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 28,
+          "phase": 2,
+          "id": "2.20",
+          "event": "行動規劃",
+          "dept": "農業部",
+          "content": "1.加強農民高溫防災與減災知識宣導。(農業部)\n2.宣導避免戶外農作、減少曝曬、適時休息與補水。(農業部)\n3.強化作物抗熱與畜禽降溫。(農業部)",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 29,
+          "phase": 2,
+          "id": "2.21",
+          "event": "行動規劃",
+          "dept": "農業部林保署",
+          "content": "1. 歷史火災高風險地區造冊列管，加強宣導，發放防火圖卡等資料。(農業部)\n2. 進行枯枝落葉與草類等移除工作，預先噴灑阻燃劑。(農業部)",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 30,
+          "phase": 2,
+          "id": "2.22",
+          "event": "指派說明",
+          "dept": "主推官",
+          "content": "請經濟部能源署說明今日實施之調適行動措施規劃",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 31,
+          "phase": 2,
+          "id": "2.23",
+          "event": "行動規劃",
+          "dept": "經濟部能源署",
+          "content": "提供價格優惠誘因，促使用戶將尖峰用電移轉至離峰時段。(經濟部)\n調度水力機組、儲能系統等調適行動措施，維持供電穩定。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 32,
+          "phase": 2,
+          "id": "2.24",
+          "event": "指派說明",
+          "dept": "主推官",
+          "content": "請經濟部水利署說明今日實施之調適行動措施規劃",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 33,
+          "phase": 2,
+          "id": "2.25",
+          "event": "行動規劃",
+          "dept": "經濟部水利署",
+          "content": "改善水力資源運用，將水力機組集中夜間使用，兼顧發電與民生用水需求。\n監控全國水情變化，強化水源靈活調度及滾動檢討節水措施。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 34,
+          "phase": 2,
+          "id": "2.26",
+          "event": "指派說明",
+          "dept": "主推官",
+          "content": "請內政部消防署說明今日實施之調適行動措施規劃",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 35,
+          "phase": 2,
+          "id": "2.27",
+          "event": "行動規劃",
+          "dept": "內政部消防署",
+          "content": "全市救護車已配置額外冰袋、生理食鹽水與瞬冷物資。\n與衛福部對接，啟動「簡易分流流程」。針對疑似熱傷害報案，先行透過電話線上指導物理降溫，減少非必要救護車出勤，以保留量能給重症患者。\n預置水箱車於高風險熱點，並要求消防人員落實「熱壓力自主管理」（輪替機制），確保人員不會在救災前先中暑。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 36,
+          "phase": 2,
+          "id": "2.28",
+          "event": "指派說明",
+          "dept": "主推官",
+          "content": "請內政部警政署說明今日實施之調適行動措施規劃",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 37,
+          "phase": 2,
+          "id": "2.29",
+          "event": "行動規劃",
+          "dept": "內政部警政署",
+          "content": "盤點雙北、桃園重要交管點，警力與義警進入「半小時就位」狀態。若號誌停擺，立即執行人工手勢指揮，確保救護車與消防車動線通暢",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 500,
+          "phase": 2,
+          "id": "2.29a",
+          "event": "指派說明",
+          "dept": "主推官",
+          "content": "請內政部國家公園署說明今日實施之調適行動措施規劃",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 501,
+          "phase": 2,
+          "id": "2.29b",
+          "event": "行動規劃",
+          "dept": "內政部國家公園署",
+          "content": "",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 38,
+          "phase": 2,
+          "id": "2.30",
+          "event": "指派說明",
+          "dept": "主推官",
+          "content": "請教育部說明今日實施之調適行動措施規劃",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 39,
+          "phase": 2,
+          "id": "2.31",
+          "event": "行動規劃",
+          "dept": "教育部",
+          "content": "依氣象署高溫燈號調整戶外課程：黃燈避免劇烈運動，橙燈減少戶外活動，紅燈停止戶外活動。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 40,
+          "phase": 2,
+          "id": "2.32",
+          "event": "指派說明",
+          "dept": "主推官",
+          "content": "請文化部說明今日實施之調適行動措施規劃",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 41,
+          "phase": 2,
+          "id": "2.33",
+          "event": "行動規劃",
+          "dept": "文化部",
+          "content": "本部將協同教育部評估高溫對戶外文化、體育活動（如表演、市集、競賽）的影響，並制定相應的調適行動措施，例如調整活動時間、提供降溫設施。\n提醒文化資產管理單位在高溫期間需保持通風，如開啟門窗、電扇，增加空氣流通降低溫度。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 42,
+          "phase": 2,
+          "id": "2.34",
+          "event": "指派說明",
+          "dept": "主推官",
+          "content": "請金管會說明今日實施之調適行動措施規劃",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 43,
+          "phase": 2,
+          "id": "2.35",
+          "event": "行動規劃",
+          "dept": "金管會",
+          "content": "促請保險業加強對因高溫導致傷亡保戶之服務。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 44,
+          "phase": 2,
+          "id": "2.36",
+          "event": "指派說明",
+          "dept": "主推官",
+          "content": "請原民會說明今日實施之調適行動措施規劃",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 45,
+          "phase": 2,
+          "id": "2.37",
+          "event": "行動規劃",
+          "dept": "原民會",
+          "content": "針對原住民族地區的特殊需求，制定高溫健康防護和調適措施，例如針對長者和慢性病患者的照護。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 200,
+          "phase": 2,
+          "id": "2.37a",
+          "event": "指派說明",
+          "dept": "主推官",
+          "content": "請行政院公共工程委員會說明今日實施之調適行動措施規劃",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 201,
+          "phase": 2,
+          "id": "2.37b",
+          "event": "行動規劃",
+          "dept": "行政院公共工程委員會",
+          "content": "（待單位填寫）",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 202,
+          "phase": 2,
+          "id": "2.37c",
+          "event": "指派說明",
+          "dept": "主推官",
+          "content": "請國家通訊傳播委員會說明今日實施之調適行動措施規劃",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 203,
+          "phase": 2,
+          "id": "2.37d",
+          "event": "行動規劃",
+          "dept": "國家通訊傳播委員會",
+          "content": "（待單位填寫）",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 204,
+          "phase": 2,
+          "id": "2.37e",
+          "event": "指派說明",
+          "dept": "主推官",
+          "content": "請交通部觀光署說明今日實施之調適行動措施規劃",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 205,
+          "phase": 2,
+          "id": "2.37f",
+          "event": "行動規劃",
+          "dept": "交通部觀光署",
+          "content": "（待單位填寫）",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 46,
+          "phase": 2,
+          "id": "2.38",
+          "event": "指派說明",
+          "dept": "主推官",
+          "content": "請臺北市政府說明今日實施之調適行動措施規劃",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 47,
+          "phase": 2,
+          "id": "2.39",
+          "event": "行動規劃",
+          "dept": "臺北市政府",
+          "content": "環保局\n彙整制訂本府熱浪災害防救對策，並持續進行氣象監測，當預測熱浪將會發生時，通報消防局透過簡訊系統通知各局處窗口啟動因應措施。另進行街道灑水以達到有效降溫之功效，同時減少揚塵及維持路面乾淨；針對所轄河川沿岸區域進行巡檢。另外將視情況適時進行環境消毒工作，以避免連續高溫情況下影響環境衛生。\n\n消防局當環保局通報預測熱浪將會發生時，透過簡訊系統通知各局處窗口啟動因應措施。另整備因應熱浪發生所引發民眾各種緊急救援情況，並即時處理連日熱浪引發之相關災害或突發事件。\n\n衛生局\n通知本市急救責任醫院加強緊急醫療服務。\n必要時研擬新聞稿提醒市民注意天氣變化。\n納入例行性稽查輔導業務，輔導本市食品業者天氣炎熱時應注意食品及食材之保存，並落實衛生自主管理以防止食物中毒。\n本市老人健康維護、獨居長者健康及心血管疾病防治，因應措施：\n(1)以電子郵件通知12區健康服務中心加強收案社區個案管理之老人或獨居長者高溫時健康維護事宜。\n(2)必要時發布新聞稿請老人、獨居長者及心血管疾病患者，注意高溫時健康維護事宜。\n\n社會局\n於高溫時期來臨前，由本市6家身心障礙者資源中心、14家老人服務中心及12區社會福利服務中心，調查所服務之獨居身心障礙者及經濟弱勢獨居長者之居住環境及基本消暑配備需求，並結合資源提供協助。\n藉由社工及志工等關懷提供所服務之獨居身心障礙者及獨居老人準備消暑相關配備，並告知居所附近短暫避暑場所，以確保弱勢民眾之健康安全，如啟動當日前1週內曾執行高溫關懷則不再次執行。\n\n勞動局對預防工作者在戶外高溫環境之危害，由臺北市勞動檢查處啟動「夏季戶外高氣溫作業勞動檢查」進行現場稽查，並透過宣導及輔導等方式，督促企業主及現場管理人員重視及做好高溫熱危害預防措施。\n\n教育局加強對於學生預防熱中暑等傷害之相關宣導，極端高溫情況下調整戶外課程之教學方式或移至陰涼處教學，以維護學生健康安全。\n\n公園處因應預報熱浪將會發生，於熱浪發生前及發生期間，增加市有植栽澆灌頻率，除了增加植栽存活率之外，亦達到協助本市降溫之功效。\n水利處配合於預警發布時，整備撈除量能。\n\n市場處配合於預警發布時，通知各市集管理委員會協助所轄市集之食品安全宣導。\n衛工處\n1.加強注意截流站操作並提供截流量資料，非有特殊因素勿關閉截流站。\n\n2.妥善操作污水處理廠，確實掌握放流水狀況。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 48,
+          "phase": 2,
+          "id": "2.40",
+          "event": "指派說明",
+          "dept": "主推官",
+          "content": "請新北市政府說明今日實施之調適行動措施規劃",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 49,
+          "phase": 2,
+          "id": "2.41",
+          "event": "行動規劃",
+          "dept": "新北市政府",
+          "content": "勞工局：將規劃派數名勞動檢查員進行勞動檢查：如戶外作業熱危害風險屬第二級者，應實施危害預防措施及提升危害認知。第三級者，應強化採取之危害預防及管理措施，避免使勞工於高氣溫時段從事戶外作，且應採取高氣溫作業熱危害預防指引所列之相關措施。第四級者，應設置具備遮陽及可以降低作業環境溫度的設備，並應提供陰涼的休息場所，同時應該提供充足飲用水等規定。\n消防局：救災救護指揮中心依醫院即時資訊，指揮轄內119將急傷病患送至就近適當之醫療機構。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 50,
+          "phase": 2,
+          "id": "2.42",
+          "event": "指派說明",
+          "dept": "主推官",
+          "content": "請桃園市政府說明今日實施之調適行動措施規劃",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 51,
+          "phase": 2,
+          "id": "2.43",
+          "event": "行動規劃",
+          "dept": "桃園市政府",
+          "content": "環保局表示，環境管理處運用回收處理水於主幹道路進行灑水降溫，同時為避免高溫影響環境衛生，將視情況適時進行環境消毒作業。此外，也已通知各區中隊確實向清潔隊員宣導，值勤時應預防高溫危害及熱傷害發生。\n\n勞動局表示，高溫環境易造成職業災害案件發生，市府已透過營造業職安區域聯防群組及本府安全伙伴聯繫介面發布宣導，特別提醒所有工作者，應注意熱危害調適行動措施及留意健康狀況，避免因高溫造成傷害，並責令工地加強人員管制。\n\n社會局表示，針對獨居長者已啟動關懷服務，加強宣導防範高溫等因應措施，提醒室內應維持良好通風，避免過於悶熱，在外活動期間，應多補充水分與電解質，盡量避免高溫環境下曝曬。同時，已請獨老服務相關單位人員及里長若發現轄內獨居老人所處環境有造成熱傷害（中暑）之虞時，應告知長輩鄰近有空調之避暑場所資訊。\n針對遊民個案部分，提醒及早預防熱傷害準備，並發放提供飲用水、帽子、扇子等避暑物品；並運用行動沐浴車及於南北區外展服務中心提供免費盥洗服務，以及提供附近公共場所及對抗熱傷害的資訊，減少高溫衝擊。針對機構住民部分，已請各該兒少、身障及老福機構，加強補充水分等抗熱宣導。\n\n農業局表示，已發布預防高溫傷害圖卡及宣導訊息至農漁民團體，包含青農、產銷班、養殖業者、農漁會及畜產協會等群組，也宣導捕蜂捉蛇大隊外勤注意高溫危害；動物保護園區動物舍已增加冷氣及風扇運作，降低舍內溫度，並避免於高溫時段進行戶外遛放作業。另外，「桃園蓮花季」將於本周末登場，提醒遊客注意高溫並多補充水分，避免熱傷害。\n\n教育局表示，已提醒各校教職員工及學生充分補充水分及電解質、穿著涼爽透氣衣物，避免於上午10時至下午2時進行戶外活動；並請各校視校園場域及學生身體情形等條件，安排適當活動及場所，加強關懷學生防曬、飲水及健康情形，留意教室及活動場域通風，建立校園熱傷害緊急處置標準流程。\n\n消防局表示，本市救護車均已配置熱傷害處理包，以因應民眾熱傷害發生時相關處置。另針對停於室外之車輛，車內如放置塑膠殼打火機等易燃物，可能因烈日高溫自燃，引發火災，呼籲民眾注意打火機及易燃物（芳香劑等）勿放置於室外車內，並留意車內易折射物及聚光物品之擺放位置，儘量將車輛停放室內或加強避曬設施。\n\n都發局表示，已請施工廠商參閱職業安全衛生署「高氣溫作業危害預防專區」相關指引及預防措施。民政局已通知各區里長協助社會局加強獨居老人進行訪視及電話關懷。\n\n衛生局宣導熱傷害預防措施：一、提醒民眾選擇寬鬆、排汗佳的衣服，並以淺色系為主；二、若感到任何身體不適，應立即停下來休息；三、避免於上午𝟭𝟬點至下午𝟮點運動；四、運動的前、中、後都需要補充足夠的水分。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 52,
+          "phase": 2,
+          "id": "2.44",
+          "event": "會議小結",
+          "dept": "主推官",
+          "content": "請各部會立即落實高溫調適行動各項對策。各單位務必嚴密監控轄下關鍵基礎設施，如遇複合型突發事件，請第一時間回報",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 54,
+          "phase": 3,
+          "id": "3.1",
+          "event": "演練情境說明",
+          "dept": "司儀",
+          "content": "演練階段三、40℃高溫-初步失能徵兆DAY0\n調適行動會議結束後，各部會開始執行應對40℃高溫之行動措施，在執行的過程中，台北市、新北市、桃園市部分地區之基礎維生設施出現初步失能之徵兆：\n\n1.台北市內湖區發生饋線事故，影響上千戶住宅，三總啟動備載電力。\n\n2.北北桃之敏感脆弱族群(年幼及年長者)發生熱衰竭、熱中暑，尤以測站飆破40度的區域為多，60人以上熱傷害急診病患送醫，有中重症，醫療體系應保持警戒。\n\n3.晚間因高溫持續，用電量持續增加，造成部分地區限電，導致加壓站停擺，進而引發停水。\n\n\n各部會將回報此情況，並針對各事件採取更為積極的應對行動。",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": true
+        },
+        {
+          "row": 55,
+          "phase": 3,
+          "id": "3.2",
+          "event": "召開會議",
+          "dept": "主推官",
+          "content": "由於40℃高溫的影響，稍早地方單位在執行調適行動措施時，有發現部分地區之基礎設施已有初步失能之徵兆，我們先請經濟部能源署與台電共同說明目前電力運作之情況。",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 56,
+          "phase": 3,
+          "id": "3.3",
+          "event": "事件說明",
+          "dept": "經濟部能源署",
+          "content": "由於高溫影響，稍早接獲供應新北市五股區、台北市內湖區、桃園市蘆竹區之變電所回報，目前負責這些地區供電的變電所溫度達到60℃，目前已偕同台電啟動調適行動措施，將會啟動風扇和水霧降溫。\n同時也因為高溫的影響，用電需求從上午開始逐漸增加，新北市五股區、台北市內湖區、桃園市蘆竹區這三區也同時出現過載之預警，本署將會持續監控變電所的狀況，必要時將採取限電、降載，以避免更大危害事件發生。\n另外，我們也將採取提供價格優惠誘因，促使用戶將尖峰用電移轉至離峰時段。\u000b調度水力機組、儲能系統等調適行動措施，維持供電穩定。\u000b改善水力資源運用，將水力機組集中夜間使用，兼顧發電與民生用水需求。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 57,
+          "phase": 3,
+          "id": "3.4",
+          "event": "指派說明",
+          "dept": "主推官",
+          "content": "謝謝經濟部能源署的說明，針對此情況，新北市、台北市、桃園市政府有沒有需要補充說明的?或是目前各地區有沒有接獲災害發生?",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 58,
+          "phase": 3,
+          "id": "3.5",
+          "event": "事件說明",
+          "dept": "臺北市政府",
+          "content": "臺北市政府發言，目前暫無電力災害相關事件發生，為防範限電降載影響到醫院、學校、照護中心等場所，已請局處確認上述場所皆有設置備用發電機。\n但本市有接獲北捷反應文湖線行經內湖區路段(西湖站至東湖站)軌溫出現60°C，這部分會請北捷啟動軌道巡檢與列車降速，同時也請捷運站所確認站內降溫物資整備齊全與空調設備運作正常，避免民眾受到熱傷害影響之情況。\n同時，北市也協調公車、計程車業者，如列車停駛，可引導民眾搭乘其他大眾運輸工具。\n此外本市之內湖區康寧路三段、民權東路六段有發生柏油軟化情況，目前已請工務局前往現場進行道路維修，同時請警察局派員協助指揮交通，引導車輛使用替代道路。本市也將委請環保局出動灑水車，進行路面灑水降溫，避免其他幹道也發生柏油軟化的狀況。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 59,
+          "phase": 3,
+          "id": "3.6",
+          "event": "事件說明",
+          "dept": "新北市政府",
+          "content": "新北市政府發言，目前暫無電力災害相關事件發生，為防範限電降載影響到醫院、學校、照護中心等場所，已請局處確認上述場所皆有設置備用發電機。\n此外本市之新五路二段有發生柏油軟化情況，目前已請工務局前往現場進行道路維修，同時請警察局派員協助指揮交通，引導車輛使用替代道路。本市也將委請環保局出動灑水車，進行路面灑水降溫，避免其他幹道也發生柏油軟化的狀況。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 60,
+          "phase": 3,
+          "id": "3.7",
+          "event": "事件說明",
+          "dept": "桃園市政府",
+          "content": "桃園市政府發言，目前暫無電力災害相關事件發生，為防範限電降載影響到醫院、學校、照護中心等場所，已請局處確認上述場所皆有設置備用發電機。\n此外本市之蘆竹區南崁路一段有發生柏油軟化情況，目前已請工務局前往現場進行道路維修，同時請警察局派員協助指揮交通，引導車輛使用替代道路。本市也將委請環保局出動灑水車，進行路面灑水降溫，避免其他幹道也發生柏油軟化的狀況。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 61,
+          "phase": 3,
+          "id": "3.8",
+          "event": "指派說明",
+          "dept": "主推官",
+          "content": "謝謝臺北市、新北市、桃園市的說明",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 62,
+          "phase": 3,
+          "id": "3.9",
+          "event": "調適行動措施",
+          "dept": "環境部氣候署",
+          "content": "氣候署建置之CoolMap抗高溫涼適地圖，將能提供民眾掌握最鄰近之涼爽點，如活動中心、圖書館等，並前往避暑。\n同時，後續將規劃透過高溫風險分析評估模組，掌握新北市目前潛在熱危害高風險之區域，並提供相關報表統計給內政部、新北市政府，加強如脆弱族群訪視等調適行動作為。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 63,
+          "phase": 3,
+          "id": "3.10",
+          "event": "行動規劃",
+          "dept": "主推官",
+          "content": "謝謝各部會回報",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 64,
+          "phase": 3,
+          "id": "3.11",
+          "event": "演練階段說明",
+          "dept": "司儀",
+          "content": "時間來到DAY0傍晚18:00，此階段各部會將針對今日實施之調適行動行動措施進行成果回報",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 65,
+          "phase": 3,
+          "id": "3.12",
+          "event": "指派說明",
+          "dept": "主推官",
+          "content": "感謝各部會，請各部會就今日實施之調適行動措施進行成果回報",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 66,
+          "phase": 3,
+          "id": "3.13",
+          "event": "成果回報",
+          "dept": "環境部氣候署",
+          "content": "氣候署CoolMap抗高溫涼適地圖協助民眾掌握最鄰近之涼爽點，如活動中心、圖書館等，並前往避暑。同時啟動高溫風險調適平台，輔佐地方單位快速掌握高溫風險區，並聯繫社福單位進行精準訪視。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 67,
+          "phase": 3,
+          "id": "3.14",
+          "event": "成果回報",
+          "dept": "環境部環管署",
+          "content": "針對40度高溫，本署已主動掌握高溫影響縣市清潔隊實際作業情形，並請各地方環保局持續協同監控，確保隊員落實補水、休息與防曬等基本防護措施。同時也強化資訊即時回報，務求清潔隊在高溫環境中「能作業、也安全」。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 68,
+          "phase": 3,
+          "id": "3.15",
+          "event": "成果回報",
+          "dept": "環境部循環署",
+          "content": "本署關懷已造冊之相關個體資收戶實際作業情形，並請環保局持續協同掌握，以提醒資源回收工作人員要採取高溫相關防護作為，並適當補水與休息。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 69,
+          "phase": 3,
+          "id": "3.16",
+          "event": "成果回報",
+          "dept": "勞動部職安署",
+          "content": "勞動部職業安全衛生署說明：\n北北桃有部分地區熱危害風險已達第三級，以擴大勞動檢查，督導事業單位採取相關應對措施。\n由於目前氣溫已持續升溫來到40℃，截至目前已發生零星熱危害事件，本署將會持續協調轄區勞動檢查機構督導事業單位辦理高溫作業熱危害防護措施，如強制戶外重體力活動不可再繼續作業或建議穿著具備散熱風扇或降溫設備之工作背心。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 70,
+          "phase": 3,
+          "id": "3.17",
+          "event": "成果回報",
+          "dept": "衛福部",
+          "content": "衛生福利部說明：\n臺北區緊急醫療調適行動中心(EOC)及北區緊急醫療調適行動中心持續掌握並分配轄區緊急醫療資源量能。\n目前在高溫40℃的影響下，有接獲一處醫療大樓有停電的情形發生，已啟動備援發電機運作，已協同衛生局了解狀況，截至目前為止並未發生醫療意外，本部將持續關注，同時與台電保持通訊暢通，確認電力搶修復原情況。而其他地區目前尚未有停電之情況發生，本部將協同經濟部能源署與台電，持續關注大型醫療機構之用電情形。\n本部亦根據氣候署提供之高溫危害高風險區域，委請新北市政府、社會局、民政局協調，加強該區域脆弱族群之訪視，必要時，委請新北市政府協同當地之警察局、消防局協助安置到鄰近的涼爽點(避暑設施)。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 71,
+          "phase": 3,
+          "id": "3.18",
+          "event": "成果回報",
+          "dept": "衛福部疾管署",
+          "content": "根據「即時疫情監視及預警系統(RODS)」分析全國180家醫院急診及時資料顯示，今日因中暑等熱急症至急診就醫有100人次，重症人次10，其中年齡分布為65歲以上居多，已加強與縣市聯繫。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 72,
+          "phase": 3,
+          "id": "3.19",
+          "event": "成果回報",
+          "dept": "交通部",
+          "content": "強化公共運輸場站的降溫措施。\n建立即時預警機制，超過55℃/56℃即啟動巡檢與列車降速，並持續監測至降溫。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 508,
+          "phase": 3,
+          "id": "3.19a",
+          "event": "成果回報",
+          "dept": "農業部",
+          "content": "",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 73,
+          "phase": 3,
+          "id": "3.20",
+          "event": "成果回報",
+          "dept": "農業部林保署",
+          "content": "歷史火災高風險地區加強宣導，發放防火圖卡等資料，進行枯枝落葉與草類等移除工作，預先噴灑阻燃劑。\n已加強農民高溫防災與減災知識宣導，宣導避免戶外農作、減少曝曬、適時休息與補水。\n強化作物抗熱與畜禽降溫。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 74,
+          "phase": 3,
+          "id": "3.21",
+          "event": "成果回報",
+          "dept": "經濟部能源署",
+          "content": "提供價格優惠誘因，促使用戶將尖峰用電移轉至離峰時段。\n調度水力機組、儲能系統等調適行動措施，維持供電穩定。\n改善水力資源運用，將水力機組集中夜間使用，兼顧發電與民生用水需求。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 75,
+          "phase": 3,
+          "id": "3.22",
+          "event": "成果回報",
+          "dept": "經濟部水利署",
+          "content": "監控全國水情變化，強化水源靈活調度及滾動檢討節水措施。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 76,
+          "phase": 3,
+          "id": "3.23",
+          "event": "成果回報",
+          "dept": "內政部消防署",
+          "content": "熱傷害預防宣導。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 77,
+          "phase": 3,
+          "id": "3.24",
+          "event": "成果回報",
+          "dept": "內政部警政署",
+          "content": "實施警察人員高溫工作防護措施。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 502,
+          "phase": 3,
+          "id": "3.24a",
+          "event": "成果回報",
+          "dept": "內政部國家公園署",
+          "content": "",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 78,
+          "phase": 3,
+          "id": "3.25",
+          "event": "成果回報",
+          "dept": "教育部",
+          "content": "依氣象署高溫燈號調整戶外課程：黃燈避免劇烈運動，橙燈減少戶外活動，紅燈停止戶外活動。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 79,
+          "phase": 3,
+          "id": "3.26",
+          "event": "成果回報",
+          "dept": "文化部",
+          "content": "提醒文化資產管理單位在高溫期間需保持通風，如開啟門窗、電扇，增加空氣流通降低溫度。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 80,
+          "phase": 3,
+          "id": "3.27",
+          "event": "成果回報",
+          "dept": "金管會",
+          "content": "促請保險業加強對因高溫導致傷亡保戶之服務。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 81,
+          "phase": 3,
+          "id": "3.28",
+          "event": "成果回報",
+          "dept": "原民會",
+          "content": "針對原住民族地區的特殊需求，制定高溫健康防護和調適措施，例如針對長者和慢性病患者的照護。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 210,
+          "phase": 3,
+          "id": "3.28a",
+          "event": "成果回報",
+          "dept": "行政院公共工程委員會",
+          "content": "（待單位填寫）",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 211,
+          "phase": 3,
+          "id": "3.28b",
+          "event": "成果回報",
+          "dept": "國家通訊傳播委員會",
+          "content": "（待單位填寫）",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 212,
+          "phase": 3,
+          "id": "3.28c",
+          "event": "成果回報",
+          "dept": "交通部觀光署",
+          "content": "（待單位填寫）",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 82,
+          "phase": 3,
+          "id": "3.29",
+          "event": "成果回報",
+          "dept": "臺北市政府",
+          "content": "勞工局：已派數名勞動檢查員進行勞動檢查，並依法裁處罰鍰。\n消防局：救災救護指揮中心依醫院即時資訊，指揮轄內119將急傷病患送至就近適當之醫療機構。119出動車次回報。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 83,
+          "phase": 3,
+          "id": "3.30",
+          "event": "成果回報",
+          "dept": "新北市政府",
+          "content": "勞工局：已派數名勞動檢查員進行勞動檢查，並依法裁處罰鍰。\n消防局：救災救護指揮中心依醫院即時資訊，指揮轄內119將急傷病患送至就近適當之醫療機構。119出動車次回報。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 84,
+          "phase": 3,
+          "id": "3.31",
+          "event": "成果回報",
+          "dept": "桃園市政府",
+          "content": "勞工局：已派數名勞動檢查員進行勞動檢查，並依法裁處罰鍰。\n消防局：救災救護指揮中心依醫院即時資訊，指揮轄內119將急傷病患送至就近適當之醫療機構。119出動車次回報。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 85,
+          "phase": 3,
+          "id": "3.32",
+          "event": "氣溫監測及通知",
+          "dept": "交通部氣象署",
+          "content": "根據氣象署的最新預測，明日台北市、新北市、桃園市為紅燈預警，依然有出現40℃的可能性。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 86,
+          "phase": 3,
+          "id": "3.33",
+          "event": "指派說明",
+          "dept": "主推官",
+          "content": "明日新北五股區、台北市內湖區、桃園市蘆竹區仍有40℃高溫發生的機率，發布紅色燈號。環境部訂於明日早上10點，召開高溫調適行動會議，請相關部會及台北市、新北市、桃園市政府參與會議。",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 88,
+          "phase": 4,
+          "id": "4.1",
+          "event": "演練情境說明",
+          "dept": "司儀",
+          "content": "演練階段四、40℃高溫損害累積DAY1\n調適行動會議結束後，各部會開始執行應對40℃高溫之行動措施，在執行的過程中，台北市、新北市、桃園市部分地區開始出現災害事件：\n\n1.北捷文湖線行經內湖區路段(西湖站至東湖站)因軌溫出現60°C停駛。\n\n2.北北桃之戶外工作者(營造業工人、外送員、軍警消人員)及慢性病患者發生熱衰竭、熱中暑，50人以上熱傷害急診病患送醫。\n\n各部會將回報此情況，並針對各事件採取更為積極的應對行動。",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": true
+        },
+        {
+          "row": 89,
+          "phase": 4,
+          "id": "4.2",
+          "event": "召開會議",
+          "dept": "主推官",
+          "content": "由於40℃高溫的影響，稍早地方單位在執行調適行動措施時，有發現部分地區因發電機組過載，發生區域性停電，導致導致五股區、內湖區、蘆竹區主要幹道路段交通號誌停擺。\n同時，根據大氣司稍早提供的資訊，台北市、新北市、桃園市部分測站之AQI達到紅色警示等級。\n我們先請經濟部能源署與台電共同說明目前電力運作之情況，地方單位說明目前受影響之主要幹道，最後由大氣司說明目前空氣品質的狀況。",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 90,
+          "phase": 4,
+          "id": "4.3",
+          "event": "事件說明",
+          "dept": "經濟部能源署",
+          "content": "由於連日高溫，導致用電需求增高，北區發電機組於稍早發生過載情形，進而導致區域性停電。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 91,
+          "phase": 4,
+          "id": "4.4",
+          "event": "指派說明",
+          "dept": "主推官",
+          "content": "請台北政府、新北市政府、桃園市政府就目前各地情況進行說明",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 92,
+          "phase": 4,
+          "id": "4.5",
+          "event": "事件說明",
+          "dept": "臺北市政府",
+          "content": "由於區域性停電，導致本市之內湖區康寧路三段、民權東路六段有發生交通號誌停擺情形，目前已調派警察人力前往現場指揮交通",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 93,
+          "phase": 4,
+          "id": "4.6",
+          "event": "事件說明",
+          "dept": "新北市政府",
+          "content": "由於區域性停電，本市之五股區新五路二段有發生交通號誌停擺之情況，目前已調派警察人力前往現場指揮交通",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 94,
+          "phase": 4,
+          "id": "4.7",
+          "event": "事件說明",
+          "dept": "桃園市政府",
+          "content": "桃園市政府發言，目前暫無電力災害相關事件發生，為防範限電降載影響到醫院、學校、照護中心等場所，已請局處確認上述場所皆有設置備用發電機。\n此外本市之蘆竹區南崁路一段有發生交通號誌停擺之情況，目前已調派警察人力前往現場指揮交通",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 95,
+          "phase": 4,
+          "id": "4.8",
+          "event": "指派說明",
+          "dept": "主推官",
+          "content": "請大氣司說明目前空氣品質之狀況",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 96,
+          "phase": 4,
+          "id": "4.9",
+          "event": "事件說明",
+          "dept": "環境部大氣司",
+          "content": "由於連日高溫，造成熱能蓄積，導致大氣中的臭氧8小時平均值因光化作用持續升高，達到紅色警示等級(AQI 151-200)，目前也已啟動調適行動機制",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 97,
+          "phase": 4,
+          "id": "4.10",
+          "event": "行動規劃",
+          "dept": "主推官",
+          "content": "謝謝各部會回報",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 98,
+          "phase": 4,
+          "id": "4.11",
+          "event": "演練階段說明",
+          "dept": "司儀",
+          "content": "時間來到DAY0傍晚18:00，此階段各部會將針對今日實施之調適行動行動措施進行成果回報",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 99,
+          "phase": 4,
+          "id": "4.12",
+          "event": "指派說明",
+          "dept": "主推官",
+          "content": "感謝各部會，請各部會就今日實施之調適行動措施進行成果回報",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 100,
+          "phase": 4,
+          "id": "4.13",
+          "event": "成果回報",
+          "dept": "環境部氣候署",
+          "content": "環境部氣候變遷署說明：\n本署已於稍早完成高溫調適行動會議召開，除執行一般性調適行動機制外，亦針對今日氣溫達40度所引發之突發事件，進行即時應對與跨部會協調。相關資料現已彙整完畢，並完成新聞稿發布，向社會各界說明政府整體調適行動作為及初步成果。\n在具體作為方面，本署近期已建置完成「抗高溫涼適地圖（CoolMap）」平台，現階段已上線提供六都之涼爽點資訊，內容涵蓋與四大超商、家樂福、全聯等合作設置之室內涼爽點，並納入各地公有場域據點。未來將持續擴大至其他縣市，以提升民眾於高溫期間之避暑可及性與安全保障。\n此外，為協助地方即時應對高溫危害，本署亦已完成支援雙北、桃園市政府辦理相關機具與車輛之調度協調作業，以強化地方端之調適行動量能。\n接續將由各部會及雙北桃園政府逐一進行本日調適行動作為與具體成果之回報，俾利本署統整後續檢討精進方向，作為未來政策研擬及實務應對之依據。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 101,
+          "phase": 4,
+          "id": "4.14",
+          "event": "成果回報",
+          "dept": "環境部環管署",
+          "content": "因應發電機組過載導致五股、內湖與蘆竹區發生區域性停電及交通號誌停擺，各區清潔隊已啟動「彈性清運路線」。勤務中心正透過廣播與無線電，引導清運車輛避開號誌停擺之壅塞幹道。同時，針對停電區域，我們將優先加強廚餘及易腐敗性垃圾的清運頻率，以防高溫引發大規模的環境衛生與異味危機。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 102,
+          "phase": 4,
+          "id": "4.15",
+          "event": "成果回報",
+          "dept": "環境部循環署",
+          "content": "針對極端高溫易引發掩埋場及資源回收暫存場之沼氣自燃，循環署已啟動「高溫防燃預警機制」。全國大型掩埋場及資源回收廠已全面開啟紅外線熱顯像儀監測，針對表面溫度超過 50℃ 之廢棄物堆置區實施預防性灑水降溫。目前各場區溫度皆控制在安全範圍內，尚未傳出併發火警情事。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 103,
+          "phase": 4,
+          "id": "4.16",
+          "event": "成果回報",
+          "dept": "勞動部職安署",
+          "content": "勞動部職業安全衛生署說明：\n本署已透過官網、各社群媒體提醒雇主應採取必要熱危害防護措施，並協調轄區勞動檢查機構督導事業單位辦理高溫作業熱危害防護措施。\n由於目前氣溫已持續升溫來到40℃，截至目前尚未發生熱危害事件，本署將會持續協調轄區勞動檢查機構督導事業單位辦理高溫作業熱危害防護措施，如強制戶外重體力活動不可再繼續作業或建議穿著具備散熱風扇或降溫設備之工作背心。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 104,
+          "phase": 4,
+          "id": "4.17",
+          "event": "成果回報",
+          "dept": "衛福部",
+          "content": "衛生福利部說明：\n台北市內湖區、新北市五股區、桃園市蘆竹區之敏感族群(年幼及年長者）、戶外工作者(如營造業勞工、外送人員)發生熱衰竭、熱中暑\n40人以上熱傷害急診病患送醫，醫療體系量能吃緊。\n臺北區緊急醫療調適行動中心(EOC)及北區緊急醫療調適行動中心持續掌握並分配轄區緊急醫療資源量能。\n衛福部責成所屬醫院主動與地方政府衛生局聯繫了解當地需求，並持續開啟與鄰近大型醫院專用路廊接收下轉病人，加強落實區域聯防機制，協助分流急診需求，各院也將急診動態資訊公告於醫院官網（急診等待人數、急性病床、加護病房待床人數等），讓民眾就醫資訊公開透明。\n目前在高溫40℃的影響下，有接獲一處醫療大樓有停電的情形發生，已啟動備援發電機運作，已協同衛生局了解狀況，截至目前為止並未發生醫療意外，本部將持續關注，同時與台電保持通訊暢通，確認電力搶修復原情況。而其他地區目前尚未有停電之情況發生，本部將協同經濟部能源署與台電，持續關注大型醫療機構之用電情形。\n本部亦根據氣候署提供之高溫危害高風險區域，委請新北市政府、社會局、民政局協調，加強該區域脆弱族群之訪視，必要時，委請新北市政府協同當地之警察局、消防局協助安置到鄰近的涼爽點(避暑設施)。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 105,
+          "phase": 4,
+          "id": "4.18",
+          "event": "成果回報",
+          "dept": "衛福部疾管署",
+          "content": "根據「即時疫情監視及預警系統(RODS)」分析全國180家醫院急診及時資料顯示，今日因中暑等熱急症至急診就醫有100人次，自昨日以來累積200人次，其中重症10人，年齡分布為65以上。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 106,
+          "phase": 4,
+          "id": "4.19",
+          "event": "成果回報",
+          "dept": "交通部",
+          "content": "交通部說明：\n由於目前氣溫持續升溫至40℃，本部陸續接獲通知，高速公路與省道部分路段有發生路面異常隆起與融化變形之情況，本部已派員搶修鋪沙，並實施交管及封閉，同時，命令公路局回報轄下易受高溫影響的瀝青路段，協請新北市環保局及消防單位調派灑水車協助降溫。\n另部分地區因高溫造成停電，導致交通號誌異常，目前已先派出義交指揮交通，同時也已啟用備用電源，同時協請台電協助搶修電力。\n此外，為防止鐵軌變形之事件發生，本部也透過臺鐵公司及高鐵公司之「智慧軌溫監測系統」持續進行嚴密監控，並授權工務單位在軌溫接近攝氏55度時，可自主執行預防性降速。\n另對於前開運輸系統之戶外工作人員，加強高溫防護宣導及關懷，並提供避暑設施設備、飲水及延長午休時間。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 509,
+          "phase": 4,
+          "id": "4.19a",
+          "event": "成果回報",
+          "dept": "農業部",
+          "content": "",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 107,
+          "phase": 4,
+          "id": "4.20",
+          "event": "成果回報",
+          "dept": "農業部林保署",
+          "content": "農業部說明：\n本部截至為止尚未接獲農民受到熱危害影響之情形，本部將持續宣導避免在戶外或高溫環境下從事農作，避免長時間日曬，適時休息、隨時補充水分，降低熱傷害發生風險，同時協請農會、新北市農業局、警察局、民政局協調派員巡視農田，以避免有農民受到熱傷害倒臥田間之意外發生。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 108,
+          "phase": 4,
+          "id": "4.21",
+          "event": "成果回報",
+          "dept": "經濟部能源署",
+          "content": "能源署說明：\n由於高溫造成新北市五股區變電站因過熱故障，造成約兩千戶停電，包括一處醫療大樓和數間學校與幼兒園，同時，也影響到部分路段之交通號誌，造成號誌異常。目前已和台電取得聯繫，正在進行搶修，同時調度備援機組支援。\n而本署也將持續掌握新北地區的用電情形，若有限電之必要，將協調台電並避開重要設施實施。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 109,
+          "phase": 4,
+          "id": "4.22",
+          "event": "成果回報",
+          "dept": "經濟部水利署",
+          "content": "水利署說明：\n目前氣溫升高至40℃，目前新北五股區有發生停電事件，導致自來水加壓站暫時無法使用，已和台電取得聯繫，了解電力恢復之狀況，而本署也將持續掌握新北地區的水資源供需情形，並積極落實強化各項節水宣導措施。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 110,
+          "phase": 4,
+          "id": "4.23",
+          "event": "成果回報",
+          "dept": "內政部消防署",
+          "content": "受今日下午區域性停電影響，雙北地區短時間內湧入大量電梯受困報案。由於室外氣溫達 40℃，密閉車廂內溫度快速飆升，本署已將停電受困列為第一優先救援級別。出勤人員均已配發破門器材、攜帶式排風扇及瞬冷冰包，以最快速度破除密閉高熱環境，目前受困民眾皆已全數救出，並無重度熱傷害傳出。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 111,
+          "phase": 4,
+          "id": "4.24",
+          "event": "成果回報",
+          "dept": "內政部警政署",
+          "content": "因應下午區域停電導致五股、內湖及蘆竹等主幹道交通號誌全面停擺，警政署已第一時間已緊急調度 800 名警力與義警，全面接管 150 處關鍵路口實施人工指揮。我們已聯合消防署劃定「醫療救護專用路廊」，強制排除路口壅塞，確保 119 救護車輛能以最快速度穿越停電災區，維持緊急醫療動線不中斷。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 503,
+          "phase": 4,
+          "id": "4.24a",
+          "event": "成果回報",
+          "dept": "內政部國家公園署",
+          "content": "",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 112,
+          "phase": 4,
+          "id": "4.25",
+          "event": "成果回報",
+          "dept": "教育部",
+          "content": "教育部說明：\n目前因高溫造成新北市五股區多所學校及幼兒園發生停電，本部已協同新北市教育局聯繫停電區域之教學單位，確認備援發電機是否正常啟動，並檢視各級學校回報是否提供足夠飲水及開放冷氣教室供學生避暑。若校園空調設備出現異常，將協助師生移至鄰近涼爽點安置，直至高溫警戒解除。\n同時，本部已協請新北市其他行政區之各級學校，於下午暫停所有戶外課程，並允許學生穿著涼爽服裝上課，確保校園提供充分飲水與冷氣教室，降低高溫衝擊。\n此外，本部亦將研擬啟動遠距教學或線上補課機制，以因應未來可能持續數日的高溫情形，確保學生學習不中斷與身心健康安全。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 113,
+          "phase": 4,
+          "id": "4.26",
+          "event": "成果回報",
+          "dept": "文化部",
+          "content": "文化部說明：\n由於氣溫持續升高至40度，本部將協調所屬文化場館（如博物館、藝文中心、圖書館等），延長並免費開放，作為民眾避暑據點，提供清涼安全的空間，供缺乏冷氣設備的民眾暫避高溫。\n同時，部分場館亦將與教育部合作，作為緊急安置師生及民眾的場所；並將動員文化志工投入服務，協助現場引導與支援，確保民眾在高溫警戒期間獲得即時協助與完善照顧。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 114,
+          "phase": 4,
+          "id": "4.27",
+          "event": "成果回報",
+          "dept": "金管會",
+          "content": "金管會說明：\n本會已促請保險業加強對因高溫導致傷亡保戶之服務，並針對因基礎設施中斷造成的損失（例如工廠因停電停水導致產能受損）做好理賠準備，快速協助企業紓困，及啟動快速理賠等保戶服務措施。\n同時，本會將協同經濟部評估停工一日對產值的影響額，也監督保險公司以因應未來可能持續數日的高溫情形，作為後續政策措施之參考。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 115,
+          "phase": 4,
+          "id": "4.28",
+          "event": "成果回報",
+          "dept": "原民會",
+          "content": "原民會說明：\n本會將協調地方原民區公所，傳達高溫資訊並確認部落長者或弱勢家庭的需求，確保偏遠地區不被遺漏。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 220,
+          "phase": 4,
+          "id": "4.28a",
+          "event": "成果回報",
+          "dept": "行政院公共工程委員會",
+          "content": "（待單位填寫）",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 221,
+          "phase": 4,
+          "id": "4.28b",
+          "event": "成果回報",
+          "dept": "國家通訊傳播委員會",
+          "content": "（待單位填寫）",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 222,
+          "phase": 4,
+          "id": "4.28c",
+          "event": "成果回報",
+          "dept": "交通部觀光署",
+          "content": "（待單位填寫）",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 116,
+          "phase": 4,
+          "id": "4.29",
+          "event": "成果回報",
+          "dept": "臺北市政府",
+          "content": "因應下午台電發電機組過載導致內湖區發生停電及號誌停擺，本市已即刻啟動「交通與維生備援機制」。警察局已調派 300 名警力進駐內科主要路口（如瑞光路、堤頂大道）實施人工交管，並確保通往三總及內湖國泰的主要幹道交通順暢。同時，交通局已啟動全市 200 處重要路口的「不斷電系統（UPS）」，將交通衝擊降至最低。目前內湖區交通維持基本運作，未發生重大事故。\n\n本市已全面升級「高溫脆弱族群防護網」。民政局與社會局已動員各區里幹事，針對造冊之 5,000 名獨居長者完成 100% 電話或實地關懷；全市 12 區行政中心及圖書館已全數轉為「避暑冷卻站」並啟動備用電力。此外，衛生局已偕同各區健康服務中心開設「院前高溫處置站」，成功將 40% 的輕度熱傷害民眾攔截於急診室外，有效保全本市重症醫療量能。\n\n受高溫熱能蓄積影響，本市臭氧 AQI 已達紅色警示。環保局已啟動「熱島退燒與空品抑制作業」，出動 60 車次灑水車，取用迪化及內湖污水廠回收水，針對全市 15 條林蔭大道及紅燈高熱區進行精準灑水，經測量路面降溫達 10℃ 以上，並有效抑制揚塵與污染物蓄積。同步，教育局已通令全市各級學校立即停止所有戶外體育與社團活動，確保學童健康。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 117,
+          "phase": 4,
+          "id": "4.30",
+          "event": "成果回報",
+          "dept": "新北市政府",
+          "content": "受下午發電機組過載影響，本市五股及新莊部分區域發生停電，導致幹道號誌停擺。新北市已立即啟動「工業區交通維安與降載專案」。警察局已調派交通警察與義警全面接管五股交流道及新北大道等 80 處關鍵路口，實施強勢疏導，並劃定救護車專用道以利病患後送至部立台北醫院或亞東醫院。同時，經發局已緊急協調五股工業區內 50 家特高壓用戶配合「需量反應」，降載廠區用電，協助台電穩定區域電網。\n\n因應連日 40℃ 導致的極端熱蓄積，以及今日的臭氧 AQI 紅色警示，本市環保局已針對八里掩埋場下達「最高等級防燃指令」。現場已部署紅外線熱顯像儀進行全區 24 小時監控，並動用 20 車次回收水針對表面溫度超過 50℃ 的熱區進行預防性強力灌救，成功壓制沼氣蓄積。此外，針對臭氧紅害，已嚴格稽查轄內大型工地與噴漆廠，強制停止高 VOCs（揮發性有機物）排放作業。\n\n本市已全面啟動「廣域高溫防護網」，並深度介接「抗高溫涼適地圖」資訊。民政局與社會局透過地圖標示的高溫紅燈熱區（如盆地無風區），精準派遣里幹事與社工，針對鐵皮屋聚落及獨居長者進行強制訪視與物資發放。全市 29 區的避暑庇護所已全數開啟備用電源運作。同時，衛生局已整合轄內急救責任醫院量能，將輕症熱傷害民眾引導至基層診所及衛生所降溫，確保重症急診防線不被擊穿。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 118,
+          "phase": 4,
+          "id": "4.31",
+          "event": "成果回報",
+          "dept": "桃園市政府",
+          "content": "受台電負載過高影響，本市蘆竹區南崁交流道周邊及物流園區發生停電及號誌停擺。桃園市已立即啟動「重車物流交通快篩專案」。警察局已調度 200 名交通警察進駐南崁路、中正北路等 40 處關鍵路口實施人工指揮，強制疏導重型車輛，並嚴禁大型重車怠速停等。同時，交通局已協調周邊大型物流中心暫緩發車，確保主幹道淨空，維持緊急救護車輛通往敏盛、長庚醫院的動線順暢。\n\n本市勞動局已會同經發局展開「工業區高溫勞檢與降載防護行動」。我們透過系統後台數據，精準鎖定熱島效應最嚴重的觀音與蘆竹工業區，執行強制勞檢。針對營造工地、機場第三航廈擴建工程及物流裝卸區，已嚴格要求雇主啟動「高頻率熱壓力輪替作業」，並於中午時段全面暫停戶外重體力勞動，目前已開出 5 張勸導單，全力防堵基層勞工與移工發生集體熱中暑。\n\n因應高溫衍生之臭氧 AQI 紅色警示，本市環保局已啟動「工業污染源與熱島雙重壓制機制」。針對轄內前 50 大揮發性有機物 (VOCs) 排放廠（如石化、印刷及塗裝業）強制執行降載減排作業。此外，調度 40 車次工業廢水回收灑水車，針對南崁、龜山等重車頻繁輾壓之高溫柏油路段進行大面積灑水，成功將路面溫度從 65℃ 降至 52℃ 以下，不僅抑制揚塵與臭氧前驅物，更防止重車輾壓導致路面軟化變形。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 119,
+          "phase": 4,
+          "id": "4.32",
+          "event": "氣溫監測及通知",
+          "dept": "交通部氣象署",
+          "content": "根據氣象署的最新預測，明日台北市、新北市、桃園市為紅燈預警，依然有出現40℃的可能性。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 120,
+          "phase": 4,
+          "id": "4.33",
+          "event": "指派說明",
+          "dept": "主推官",
+          "content": "明日新北五股區、台北市內湖區、桃園市蘆竹區仍有40℃高溫發生的機率，發布紅色燈號。環境部訂於明日早上10點，召開高溫調適行動會議，請相關部會及台北市、新北市、桃園市政府參與會議。",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 122,
+          "phase": 5,
+          "id": "5.1",
+          "event": "演練情境說明",
+          "dept": "司儀",
+          "content": "演練階段五、40℃高溫-災情惡化DAY2\n調適行動會議結束後，各部會開始執行應對40℃高溫之行動措施，在執行的過程中，台北市、新北市、桃園市部分地區之出現災害事件：\n\n1.因連日高溫，導致新北市晚間零星區域出現堆置垃圾悶燒情形。\n\n2.五股區、內湖區、蘆竹區工業區部分路段柏油有軟化現象發生，數輛大卡車駛過後造成路面變形。\n\n\n各部會將回報此情況，並針對各事件採取更為積極的應對行動。",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": true
+        },
+        {
+          "row": 123,
+          "phase": 5,
+          "id": "5.2",
+          "event": "召開會議",
+          "dept": "主推官",
+          "content": "由於40℃高溫的影響，稍早地方單位在執行調適行動措施時，有發現部分地區因發電機組過載，發生區域性停電，導致文湖線捷運受停電影響而停擺，有部分民眾受困於車廂內。\n台北市內湖區、新北市五股區、桃園市蘆竹區之敏感族群(年幼及年長者）、戶外工作者(如營造業勞工、外送人員)發生熱衰竭、熱中暑)，有大量民眾送醫，我們請地方政府針對這部分進行說明",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 124,
+          "phase": 5,
+          "id": "5.3",
+          "event": "事件說明",
+          "dept": "經濟部能源署",
+          "content": "由於連續兩日 40℃ 高溫且濕度達 70%，城市產生嚴重的夜間熱蓄積，導致全台空調負載遠超預期。今日上午 10 時，北部數座關鍵變電所因設備過熱無法散熱，觸發保護機制自動跳脫；同時，部分發電機組因超載運轉亦發生跳機，導致北台灣出現大範圍的「低頻卸載停電」。\n\n目前停電已直接導致文湖線全線停擺，且雙北多家醫院面臨市電中斷。\n\n為避免電網全面崩潰並進行殘局控管，能源署已下達「保命優先供電指令」：\n第一、立即強制北部大型工業用戶（如內科、五股工業區）實施最高等級需量降載。\n第二、啟動緊急分區輪流停電。\n第三、透過微電網與饋線轉供技術，我們將把擠出來的電力容量，最優先供電給文湖線沿線變電站（協助列車進站或開門通風），以及重症急救責任醫院，全力支援警政、消防與衛生單位的搶救行動。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 125,
+          "phase": 5,
+          "id": "5.4",
+          "event": "事件說明",
+          "dept": "衛福部",
+          "content": "由於連續三日的熱蓄積效應，加上今日上午的大範圍停電，導致失去空調保護的敏感族群出現集體熱衰竭。同時，文湖線受困事件正持續產生大量病患。\n\n目前雙北，特別是內湖區的三總與周邊急救責任醫院，短短兩小時內已湧入超過 100 名熱傷害傷患，急診收容量已達 120% 嚴重過載。更嚴峻的是，受市電中斷影響，醫院備用電力僅能維持維生設備，急診室空調降載導致室內悶熱，醫療級降溫設備與冰塊庫存即將見底。\n\n為避免重症醫療防線全面崩潰，衛福部已下達「災難級醫療分流指令」：\n第一、立即啟動大量傷病患（MCI）機制，暫停所有非緊急醫療服務。\n第二、聯合消防署執行「強制作業分流」。輕中度熱傷害患者將不送入急診室，全面改由衛生局於醫院外圍或鄰近之備用冷卻中心（如具有獨立發電的區公所）開設「戶外緊急降溫站」就地處置。\n第三、請求經濟部能源署及台電，務必將重症醫院列為最優先復電目標，否則重症患者將面臨極大生命威脅",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 126,
+          "phase": 5,
+          "id": "5.5",
+          "event": "事件說明",
+          "dept": "內政部消防署",
+          "content": "受上午大停電影響，全國 119 報案系統於半小時內湧入破千件「電梯受困」與「室內熱衰竭」通報。其中最危急之災情為「捷運文湖線高架段列車受困」。失去空調的密閉金屬車廂，在 40℃ 烈日曝曬下已成高熱悶鍋，乘客隨時面臨集體熱中暑的生命威脅。\n\n為應對此極端複合災難，消防署已下達「最高等級救援與分流指令」：\n\n第一、啟動特種救援與就地降溫： 已責成台北市消防局動員所有特搜大隊與雲梯車，會同北捷人員執行文湖線「高空破窗與軌道徒步撤離」。同時於各受困站點下方直接開設「前進冷卻救護站」，對救出的高溫乘客立即實施冰水降溫，與時間賽跑。\n\n第二、執行災難級院前分流 (MCI)： 配合衛福部急診過載之現況，本署已對全國救護車輛下達「紅色攔截令」。即刻起，僅有核心體溫超過 40℃ 或意識昏迷之「極重症熱傷害」患者送往急診；其餘輕中症受困民眾，一律由救護車或警車轉送至各地方政府徵用之「臨時冷卻收容所」，全力保全重症醫療防線。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 127,
+          "phase": 5,
+          "id": "5.6",
+          "event": "事件說明",
+          "dept": "內政部警政署",
+          "content": "受上午大規模停電影響，雙北與桃園主要幹道交通號誌全數停擺，市區交通已陷入嚴重壅塞。同時，文湖線高架受困事件及急診室滿載拒收輕症的狀況，導致街頭與醫療院所的群眾焦躁情緒快速飆升，隨時可能引發治安衝突。\n\n為確保國家救災系統不因交通與治安崩潰而失能，警政署已下達「最高等級交通強制與維安指令」：\n\n第一、強勢淨空醫療專用路廊： 已動員雙北及桃園所有交通警察與義警，全面接管通往內湖三總、長庚、亞東等重症醫院之核心路口。我們已授權第一線同仁採取「最高強度之硬性驅離」，嚴格排除任何佔用救護車道之車輛，全力確保消防署的後送動線暢通。\n\n第二、文湖線疏散區絕對封鎖： 針對文湖線沿線救援重點區域，警方已拉出大範圍封鎖區，阻絕圍觀民眾與非救災車輛進入。同時配合消防局，引導撤離之高溫不適乘客至陰涼處，嚴防現場因恐慌引發推擠踩踏",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 128,
+          "phase": 5,
+          "id": "5.7",
+          "event": "事件說明",
+          "dept": "臺北市政府",
+          "content": "稍早由於再度發生區域性停電，導致文湖線捷運受影響而停擺，民眾受困於車廂內，當下已啟動緊急調適行動機制，疏散民眾，然而還是有部分民眾出現急性熱衰竭的症狀，狀況較為嚴重者，目前已送醫治療",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 129,
+          "phase": 5,
+          "id": "5.8",
+          "event": "事件說明",
+          "dept": "新北市政府",
+          "content": "新北市針對大範圍停電引發的複合災情進行說明。\n\n受上午大規模停電影響，本市目前面臨極嚴峻的「室內高熱危機」。五股、泰山、三重等區密集的鐵皮工廠與頂樓加蓋，在失去電力與 40℃ 高溫日曬下，室內溫度已飆破 50℃，宛如大型烤箱。119 報案中心在一小時內已湧入超過 300 件室內熱昏厥與熱衰竭的求救電話。\n\n同時，停電導致交通號誌全毀，連接雙北的聯外橋樑與主要幹道全面癱瘓，本市救護車輛後送時間被迫延長 3 倍以上，亞東、雙和及輔大等急救責任醫院也已回報急診滿床，無法再收治輕症患者。\n\n為應對此災情惡化狀態，新北市已下達「極端災難防護指令」：\n第一、啟動強制預防撤離： 結合警察與里長系統，針對地圖上標示的鐵皮屋熱區及高風險獨居者進行強制訪視，發現異狀立即移出，不待其病發。\n第二、實施強勢交通接管： 針對通往重症醫院的核心幹道實施「非緊急車輛只出不進」的硬性管制，全力保全救護車的專用路廊。\n第三、開設市級大型冷卻站： 已緊急徵用板橋體育館及新北市府一樓大廳等具備大型備用發電機之場館，轉作「臨時冷卻中心」，由衛生局派駐醫護，全面攔截並收容無法進入醫院的輕中度熱傷害市民。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 130,
+          "phase": 5,
+          "id": "5.9",
+          "event": "事件說明",
+          "dept": "桃園市政府",
+          "content": "上午大停電發生後，全市各大型工業區及無數中小型鐵皮廠房，瞬間失去通風與降溫設備。在 40℃ 且高濕度的環境下，廠區內溫度已逼近 50℃。本市 119 短時間內已接獲超過 200 起勞工與移工集體熱暈厥的通報，部立桃園醫院及林口長庚急診已宣告滿載。\n\n同時，停電導致南崁、八德等物流樞紐交管號誌全滅，數以千計的大型重車癱瘓於主幹道，加上重車怠速散發的熱能，讓路面溫度飆破 60℃，並徹底阻斷了醫療後送的專用路廊。\n\n第一、強制停工與就地冷卻： 勞動局已透過災防告警系統，強制全市非必要之工業區立即停工。我們已緊急徵用園區內具備大型備用發電機之廠辦設施，轉作「工業區臨時冷卻站」，要求雇主將勞工就地疏散安置，不跨區移動。\n第二、物流重車強制淨空： 警察局已於各交流道及主幹道實施「重車硬性管制」，全面禁止大型物流車輛上路，並強制引導已在路上的重車就近停靠空地熄火。我們必須全力淨空主幹道，確保救護車能順利通行。\n第三、啟動移工多語系救災防護： 針對高風險的移工族群，已啟動東南亞四國語言的災防廣播與通訊軟體推播，教導停電下的物理降溫法，全力防堵資訊落差造成的傷亡。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 131,
+          "phase": 5,
+          "id": "5.10",
+          "event": "行動規劃",
+          "dept": "主推官",
+          "content": "謝謝各部會回報，若還有更多突發事件，也請再第一時間回報",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 132,
+          "phase": 5,
+          "id": "5.11",
+          "event": "演練階段說明",
+          "dept": "司儀",
+          "content": "時間來到DAY2傍晚18:00，此階段各部會將針對今日實施之調適行動行動措施進行成果回報",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 133,
+          "phase": 5,
+          "id": "5.12",
+          "event": "指派說明",
+          "dept": "主推官",
+          "content": "感謝各部會，請各部會就今日實施之調適行動措施進行成果回報",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 134,
+          "phase": 5,
+          "id": "5.13",
+          "event": "行動成果",
+          "dept": "環境部氣候署",
+          "content": "環境部氣候變遷署說明：\n本署已於稍早完成高溫調適行動會議召開，除執行一般性調適行動機制外，亦針對今日氣溫達40度所引發之突發事件，進行即時應對與跨部會協調。相關資料現已彙整完畢，並完成新聞稿發布，向社會各界說明政府整體調適行動作為及初步成果。\n在具體作為方面，本署近期已建置完成「抗高溫涼適地圖（CoolMap）」平台，現階段已上線提供六都之涼爽點資訊，內容涵蓋與四大超商、家樂福、全聯等合作設置之室內涼爽點，並納入各地公有場域據點。未來將持續擴大至其他縣市，以提升民眾於高溫期間之避暑可及性與安全保障。\n此外，為協助地方即時應對高溫危害，本署亦已完成支援雙北、桃園市政府辦理相關機具與車輛之調度協調作業，以強化地方端之調適行動量能。\n接續將由各部會及雙北桃園政府逐一進行本日調適行動作為與具體成果之回報，俾利本署統整後續檢討精進方向，作為未來政策研擬及實務應對之依據。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 135,
+          "phase": 5,
+          "id": "5.14",
+          "event": "行動成果",
+          "dept": "環境部環管署",
+          "content": "我們緊急調度了雙北及桃園共 80 輛回收水灑水車，放棄常規路線，全數集中於上述熱點外圍進行「高頻率環繞式灑水」。經實測，成功將冷卻站周邊的戶外環境溫度壓低 3 至 5 度，有效舒緩了疏散群眾與醫護人員的熱壓力。\n全國清潔隊皆嚴格落實「停止日間戶外勤務」之調適指令。\n\n在掩埋場自燃防堵方面，面對連續 40℃ 的極端熱蓄積，全國大型掩埋場及資源回收暫存場今日「零火警」。 儘管面臨區域停電，各場區皆順利啟動備用電源，維持紅外線熱顯像儀運作，並完成 5 輪以上的預防性灑水壓制，成功防堵了沼氣自燃可能引發的複合型空品災難。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 136,
+          "phase": 5,
+          "id": "5.15",
+          "event": "行動成果",
+          "dept": "環境部循環署",
+          "content": "本署於第一時間與臺北市及新北市、桃園市環保局聯繫，完成99位個體資收戶關懷，提醒注意中暑等情形，皆未有個體資收戶受到熱傷害之情形。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 137,
+          "phase": 5,
+          "id": "5.16",
+          "event": "行動成果",
+          "dept": "勞動部職安署",
+          "content": "首先，在強制停工與疏散方面，今日上午大範圍停電導致無數鐵皮廠房與室內作業空間失去通風設備。面對室內飆破 50℃ 的致命威脅，本署已於第一時間會同地方勞動局，啟動「熱危害強制停工機制」。 透過強力要求與廣播，成功迫使雙北及桃園共計 3,500 處高風險營造工地與無空調廠房立即停止作業，並要求雇主將勞工與移工就地疏散至陰涼處，成功從源頭阻斷了海量的熱中暑病患湧入已過載的急診室。\n\n其次，在強力勞檢執法部分，為嚴防雇主罔顧人命，本署今日動員全國勞檢人力共計查獲 45 家企業在高溫且停電狀態下，仍強迫勞工進行重體力勞動。針對這些違規雇主，本署已全數開立最高罰鍰並當場勒令停業，絕不容許氣候災害轉嫁為基層勞工的生命威脅。\n\n最後，因應白天停工，我們預估今晚將出現大規模的夜間趕工作業潮。為防範夜間高濕度悶熱與照明不足引發二次職災，本署已緊急發布「災後夜間作業勞安指引」，要求所有夜間營造與物流作業必須強制增加輪替頻率並配置降溫物資。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 138,
+          "phase": 5,
+          "id": "5.17",
+          "event": "行動成果",
+          "dept": "衛福部",
+          "content": "本部今日持續關注醫療體系及相關社福系統運作。今日在高溫40℃的影響下，有接獲一處醫療大樓有停電的情形發生，事件當下已啟動備援發電機運作，無發生緊急醫療意外之狀況。\n發布預防熱傷害衛教資訊，提醒民眾留心熱傷害症狀，已掌握今日醫護人員協助緊急醫療機制之狀況，透過各地方政府主動關懷獨居長者、街友、弱勢家庭並進行預防熱傷害宣導，計297人次。\n台北市內湖區、新北市五股區、桃園市蘆竹區之敏感族群(年幼及年長者）、戶外工作者(如營造業勞工、外送人員)發生熱衰竭、熱中暑，\n100人以上熱傷害急診病患送醫，醫療體系量能過載。\n衛福部責成所屬醫院主動與地方政府衛生局聯繫了解當地需求，並持續開啟與鄰近大型醫院專用路廊接收下轉病人，加強落實區域聯防機制，協助分流急診需求，各院也將急診動態資訊公告於醫院官網（急診等待人數、急性病床、加護病房待床人數等），讓民眾就醫資訊公開透明。\n\n臺北今日下午已全面接管急救責任醫院的床位與車輛調度。 針對文湖線受困與室內高熱引發的大量傷患，我們嚴格執行「院前分流」。今日共計將 450 名輕中度熱傷害患者，成功分流並轉送至雙北市府開設之「戶外緊急降溫站」。目前內湖三總、亞東等核心醫院的急診滿床率已從白天的 120% 降至 95% 危險臨界線內，成功守住重症醫療防線。\n\n針對桃園工業區的集體熱衰竭事件，北區 EOC 果斷啟動了「跨區醫療支援網絡」。 在林口長庚與部桃宣告急診滿載時，我們調度了民間救護車隊，避開壅塞路段，將 80 名中度熱中暑之移工與本國勞工，成功南送至新竹馬偕與東元醫院進行收治，有效消化了桃園區的瞬間湧入之大量傷患。\n\n在醫院維生設施保全方面，經兩區 EOC 盤點，目前北北桃共 32 家急救責任醫院之備用發電機皆維持穩定運轉。 加護病房（ICU）與呼吸器等維生設備未受停電影響。同時，我們已透過警政署專用路廊，完成 15 家柴油庫存較低醫院的緊急油料補給，確保在全面復電前，重症病患生命安全無虞。\n\n目前北部醫療防線雖面臨極限壓力，但在跨區調度下，系統並未崩潰。EOC 今晚將持續警戒夜間高濕度可能帶來的遲發性熱衰竭。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 139,
+          "phase": 5,
+          "id": "5.18",
+          "event": "行動成果",
+          "dept": "衛福部疾管署",
+          "content": "根據「即時疫情監視及預警系統(RODS)」分析全國180家醫院急診及時資料顯示，今日因中暑等熱急症至急診就醫有100人次，重症人次10，其中年齡分布為65歲以上，已加強與縣市聯繫。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 140,
+          "phase": 5,
+          "id": "5.19",
+          "event": "行動成果",
+          "dept": "交通部",
+          "content": "第一，關於大眾最關切的捷運文湖線高架受困事件： 經本部與雙北市府及消防署通力合作，受困於軌道上的 3 列列車、共計 420 名乘客，已於下午 15:30 全數完成高空與軌道徒步撤離。所有不適旅客皆已由 EOC 接手處置。目前北捷工程人員已進場，正徹夜針對受高溫熱膨脹影響之軌道及斷電受損之號誌系統進行安全巡檢。\n\n第二，在公路路網嚴重壅塞方面： 今日下午因號誌異常導致的國道交流道與省道大壅塞，在警政署交管下，目前主幹道車流已恢復緩速流動，成功保住了醫療後送的專用路廊。為防範夜間視線不良引發車禍，公路局已緊急調度 150 組移動式發電機，正漏夜搶修雙北及桃園共 80 處核心路口（含五股、南崁交流道）的交通號誌。\n\n第三，針對明日（Day 3）的通勤調適計畫： 考量極端高溫持續且電網尚未完全穩定，為防範再次發生捷運停駛民眾受困事件，交通部已核定雙鐵及北捷明日啟動「高溫調適班表」。 軌道運輸將實施減班與降速行駛，並已備妥 500 輛客運、公車隨時應急。同時，我們已與桃園市府協調，全面放寬重型物流車夜間通行限制，利用夜間降溫時段消化今日停擺的物流運能，全力減輕明日白天的交通與熱島負擔。\n\n今日高速公路與省道途經五股路段各有1處發生路面異常隆起與融化變形之情況，本部目前已完成搶修。\n另部分地區因高溫造成停電，導致交通號誌異常，目前已先派出義交指揮交通，同時也已啟用備用電源，同時協請台電協助搶修電力。\n此外，為防止鐵軌變形之事件發生，本部也透過臺鐵公司及高鐵公司之「智慧軌溫監測系統」持續進行嚴密監控，並授權工務單位在軌溫接近攝氏55度時，可自主執行預防性降速。\n另對於前開運輸系統之戶外工作人員，加強高溫防護宣導及關懷，並提供避暑設施設備、飲水及延長午休時間。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 141,
+          "phase": 5,
+          "id": "5.20",
+          "event": "行動成果",
+          "dept": "農業部",
+          "content": "本部截至為止尚未接獲農民受到熱危害影響之情形，本部已持續宣導避免在戶外或高溫環境下從事農作，避免長時間日曬，適時休息、隨時補充水分，降低熱傷害發生風險，同時協請農會、新北市農業局、警察局、民政局協調派員巡視農田，以避免有農民受到熱傷害倒臥田間之意外發生。本部由各地試驗改良場所及地方農會協助進行農作物之高溫逆境之預防、畜禽熱緊迫降低等因應，並宣導避免在戶外或高溫環境下從事農作，避免長時間日曬，適時休息、隨時補充水分，降低熱傷害發生風險。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 142,
+          "phase": 5,
+          "id": "5.21",
+          "event": "行動成果",
+          "dept": "農業部林保署",
+          "content": "針對連日 40℃ 蓄熱導致的極端林火風險，今日運用無人機掛載熱顯像儀，精準鎖定雙北與桃園交界的淺山地區進行監測。今日共偕同消防署成功壓制 3 起因地表高溫自燃之林地火苗，未波及任何停電中之市郊社區。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 143,
+          "phase": 5,
+          "id": "5.22",
+          "event": "行動成果",
+          "dept": "經濟部能源署",
+          "content": "維生基礎設施方面： 配合衛福部與交通部今日下午的緊急需求，台電已啟動緊急調適行動。最優先且全數恢復了北北桃 32 家急救責任醫院及文湖線核心站點的電力供應。 目前重症醫療機構供電穩定。\n\n在防堵電網全面崩潰的處置上，我們感謝五股、內湖、觀音等工業區的大型企業配合停工降載，瞬間卸除了龐大的用電負載，成功替電網爭取到重整的空間\n\n雖然部分發電機組已陸續重新併網，但今晚濕度高達 70%，夜間空調負載居高不下，且太陽光電已歸零。目前電網仍處於「供電警戒」狀態。 台電已放水啟動全數抽蓄水力機組協助供應緊急用電。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 144,
+          "phase": 5,
+          "id": "5.23",
+          "event": "行動成果",
+          "dept": "經濟部水利署",
+          "content": "針對大停電引發之「都市停水危機」，水利署已啟動緊急供水調度。今日下午，雙北及桃園多處自來水加壓站因斷電停擺。我們已緊急調度全台 100 部大型移動式發電機進駐核心加壓站，優先保住了 32 家重症醫院與大型冷卻收容所的自來水供應。 同時，已協調國軍與地方政府出動 50 輛水車，前往停水之密集住宅區設立臨時供水站，嚴防高溫缺水引發之群體熱衰竭與衛生危機。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 145,
+          "phase": 5,
+          "id": "5.24",
+          "event": "行動成果",
+          "dept": "內政部消防署",
+          "content": "針對今日極端複合災情，本署已完成階段性搶救。全台累計 1,200 件電梯受困案，已於傍晚 18:00 前「全數清零」，成功救出所有受困民眾。 配合衛福部之院前分流機制，今日成功將 60% 之輕症患者攔截於急診室外。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 146,
+          "phase": 5,
+          "id": "5.25",
+          "event": "行動成果",
+          "dept": "內政部警政署",
+          "content": "交通警察大隊指引下，目前主幹道車流已恢復緩行，醫療專用路廊全線淨空。針對仍未復電之災區，我們已派駐所有保安警力與義警，針對停電商業區、大賣場及無保全之住宅區實施高密度巡邏，避免趁火打劫或醫療暴力事件發生，全面穩定社會民心。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 504,
+          "phase": 5,
+          "id": "5.25a",
+          "event": "行動成果",
+          "dept": "內政部國家公園署",
+          "content": "",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 147,
+          "phase": 5,
+          "id": "5.26",
+          "event": "行動成果",
+          "dept": "教育部",
+          "content": "考量校園失去空調且室內溫度快速蓄熱，教育部已第一時間授權停電災區各級學校「緊急就地疏散」，將學童移至陰涼通風處，並配合警政署交管，於傍晚前將所有學童安全交由家長接回。考量明日（Day 3）仍有 40℃ 極端高溫且供電極度不穩，本部宣布北北桃重災區各級學校明日實施「預防性停課」，改採非同步線上學習，以確保學童生命安全，並減輕明日白天的交通與電網負載。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 148,
+          "phase": 5,
+          "id": "5.27",
+          "event": "行動成果",
+          "dept": "文化部",
+          "content": "今日大停電期間，國家兩廳院、故宮博物院等大型場館皆順利引導上萬名觀眾安全疏散，未發生踩踏事件。 故宮與各國家博物館之備用發電機已全數啟動，將僅存電力 100% 供應給典藏庫房之微氣候控制系統（恆溫恆濕），成功保住了國家級文物免受極端氣候之物理損壞。明日各附屬場館將配合能源署，實施預防性休館以節約用電。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 149,
+          "phase": 5,
+          "id": "5.28",
+          "event": "行動成果",
+          "dept": "金管會",
+          "content": "針對停電可能引發之金融秩序動盪，金管會確認全國核心結算與交易系統，皆已成功切換至異地備援與不斷電系統（UPS），今日金融市場運作未受中斷。 針對災區 ATM 停擺及電子支付失效問題，我們已責成各銀行啟動緊急發電機維持重點分行運作，並宣布「災區跨行提款免收手續費」。同時，已協調四大超商啟動「離線記帳/現金收付緊急機制」，確保民眾在斷電期間仍能順利購買飲水與降溫物資。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 150,
+          "phase": 5,
+          "id": "5.29",
+          "event": "行動成果",
+          "dept": "原民會",
+          "content": "針對今日極端高溫與林火威脅，原民會已與雙北、桃園山區之原鄉部落取得聯繫。目前烏來、復興等山區部落雖面臨市電中斷，但已啟動部落自主發電與避難收容機制。 我們已會同衛生單位，完成部落內需依賴維生器材（如製氧機）之高風險長者的造冊與電池替換作業。明日將持續會同林保署，嚴密監控部落周邊之林野火災風險，確保原鄉安全。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 230,
+          "phase": 5,
+          "id": "5.29a",
+          "event": "行動成果",
+          "dept": "行政院公共工程委員會",
+          "content": "（待單位填寫）",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 231,
+          "phase": 5,
+          "id": "5.29b",
+          "event": "行動成果",
+          "dept": "國家通訊傳播委員會",
+          "content": "（待單位填寫）",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 232,
+          "phase": 5,
+          "id": "5.29c",
+          "event": "行動成果",
+          "dept": "交通部觀光署",
+          "content": "（待單位填寫）",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 151,
+          "phase": 5,
+          "id": "5.30",
+          "event": "行動成果",
+          "dept": "新北市政府",
+          "content": "新北市政府-災害防救辦公室說明：\n氣象署觀測資料顯示，今日中午12時30分，新北市五股區出現攝氏40度極端高溫，預估影響時間持續至下午16時。受高溫影響，當地變電站發生過熱故障，導致約2,000戶停電，影響範圍涵蓋一處醫療大樓及多所學校與幼兒園，部分路面亦出現異常隆起。\n\n面對本次突發事件，新北市政府即刻啟動調適行動機制，並協調各局處與中央部會迅速投入處置，具體成果如下：\n\n一、電力與交通調適行動\n電力搶修與備援：協同經濟部能源署及台電公司確認受災區域，立即啟動搶修與備援電力調度作業。\n交通秩序維護：因交通號誌異常，警察局調派義交現場維持路口秩序，確保用路人安全。\n\n二、弱勢關懷與避暑安置\n獨居長者關懷：社會局關懷訪視26人次，並與民政局協調開放1處避暑場所；民政局提醒各區里長加強關懷，共啟動3次訪視行動。\n兒少保護措施：教育局通知各級學校、幼兒園全面暫停戶外活動，允許學生穿著輕便服裝上課，並協助師生於必要時移至鄰近涼爽點避暑。\n避暑支援：警察局協助提供避暑服務予民眾12人次。\n\n三、醫療與公共安全調適行動\n醫療量能維護：衛生局與消防局於停電區域周邊調度救護車進駐，確保緊急救護暢通；另通報急救責任醫院加強熱傷害衛教與照護（12人次）。\n公共設施處置：針對路面隆起，工務局啟動搶修作業，警察局同步指揮交通；環保局派出洗街車17車次，灑水總量117噸、涵蓋25條路段、總長125公里。\n\n四、農業與勞工安全\n農業防熱宣導：農業局與民政局、農會、漁會合作進行防熱宣導（25處農會、5處漁會），派員巡視農田並執行公園綠帶灑水作業（6噸）。\n勞工高溫防護：勞工局稽查66處工作場所，共督導2,099名職業安全衛生人員落實高溫防護措施。\n\n五、宣導與輿情應對\n防熱宣導：警察局透過臉書及跑馬燈宣導共8件；消防局針對海域及水域遊客宣導10人次；觀光局於6處遊客中心提供防熱資訊與飲水服務。\n公共場所宣導：經發局於市場張貼公告，宣導高溫風險與防護建議。\n即時澄清：新聞局加強訊息發布，主動澄清網路錯誤資訊，穩定民眾情緒。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 153,
+          "phase": 5,
+          "id": "5.32",
+          "event": "行動成果",
+          "dept": "臺北市政府",
+          "content": "環保局道路高溫灑水出動16人次、8車次，灑水量165噸、里程數70.5公里；河川沿岸轄區巡檢無死魚情事。\n衛生局通知十二區健康服務中心加強收案社區個案管理之老人或獨居長者高溫時健康維護事宜，輔導22處食品業者，衛生局緊急及災難調適行動指揮中心（EMOC）接獲醫院通報因熱傷患就醫之病患100人。\n社會局通報各單位啟動執行高溫關懷，總計關懷6,669人次。\n勞動局檢查夏季戶外高氣溫作業勞動共計5處。\n教育局通知本市高級中等以下學校、幼兒園業務承辦人配合因應，有特殊情形會進行校安通報。\n公園處進行公園綠地澆灌，用水量335.75噸、澆灌面積91,140平方公尺。\n市場處食品安全宣導共計137處。\n消防局救護通報1件，共計0人送醫。\n水利處通知淡水河、基隆河「河面漂流物撈除工作」承商整備撈除量能。\n衛工處北市截流站正常開啟截流，持續監測迪化污水處理廠及內湖污水處理廠污水處理放流水質。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 155,
+          "phase": 5,
+          "id": "5.34",
+          "event": "行動成果",
+          "dept": "桃園市政府",
+          "content": "第一，在工業區防護與移工安置方面： 面對大停電導致鐵皮廠房瞬間成為高溫烤箱，本市今日果斷下達「強制停工令」。市府團隊成功疏散各大工業區近萬名勞工與外籍移工，並就近安置於徵用之 50 處具備備用電力之「大型廠辦臨時冷卻站」。透過東南亞四國語言的災防廣播不間斷推播，我們成功安撫了移工情緒，今日成功防堵了工業區發生大規模集體熱衰竭之憾事。\n\n第二，在物流動脈解鎖與夜間調配方面： 針對白天因號誌停擺導致的南崁及各大交流道物流重車嚴重壅塞，本市警察局已於傍晚前透過強勢疏導，全面淨空省道與醫療專用路廊。考量明日極端高溫仍將持續，本市已正式啟動**「物流夜間調適方案」**。即刻起全面放寬大型重車的夜間市區行駛限制，引導企業將白天的運能全數轉移至夜間降溫時段執行，以最大程度減輕明日白天的交通與熱島負擔。\n\n第三，在醫療防線保衛方面： 感謝衛福部北區 EOC 的跨區調度支援。在部桃與林口長庚急診宣告滿載的極端時刻，本市衛生局配合中央，成功將 80 名中重症患者南送新竹收治；同時，本市於各區公所及體育館緊急開設的 15 處「野戰冷卻收容所」，今日共攔截並實施物理降溫處置達 350 餘名輕症市民，成功死守住重症醫療量能。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 156,
+          "phase": 5,
+          "id": "5.35",
+          "event": "行動指派",
+          "dept": "主推官",
+          "content": "感謝各部會的報告，最後請氣象署說明明日的預測",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 157,
+          "phase": 5,
+          "id": "5.36",
+          "event": "氣溫監測及通知",
+          "dept": "交通部氣象署",
+          "content": "根據氣象署的最新預測，明日台北市、新北市、桃園市為橙燈預警，溫度將下降至36℃。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 159,
+          "phase": 6,
+          "id": "6.1",
+          "event": "演練情境說明",
+          "dept": "司儀",
+          "content": "演練階段六、復原調適DAY3\n隨著氣溫下降，本次連日40°C預警正式解除。各部會隨即針對本次事件展開檢討，重點包含：\n\n一、比對本次實際成災之關鍵區域，與地方氣候變遷調適計畫所列之風險評估區域是否存有落差；\n\n二、檢視調適計畫中各項防範措施之執行成效，並評估後續之精進方向。",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": true
+        },
+        {
+          "row": 160,
+          "phase": 6,
+          "id": "6.2",
+          "event": "召開會議",
+          "dept": "主推官",
+          "content": "本次連續3日之高溫40℃事件，造成台北市、新北市、桃園市皆有發生高溫危害事件，統整如下：\n\nDay0\n1.台北市內湖區發生饋線事故，影響上千戶住宅，三總啟動備載電力。\n2.北北桃之敏感脆弱族群(年幼及年長者)發生熱衰竭、熱中暑，尤以測站飆破40度的區域為多，60人以上熱傷害急診病患送醫，有中重症。\n3.晚間因高溫持續，用電量持續增加，造成部分地區限電，導致加壓站停擺，進而引發停水。\n\nDay1\n1.北捷文湖線行經內湖區路段(西湖站至東湖站)因軌溫出現60°C停駛。\n2.北北桃之戶外工作者(營造業工人、外送員、軍警消人員)及慢性病患者發生熱衰竭、熱中暑，50人以上熱傷害急診病患送醫。\n\nDay2\n1.因連日高溫，導致新北市晚間零星區域出現堆置垃圾悶燒情形。\n2.五股區、內湖區、蘆竹區工業區部分路段柏油有軟化現象發生，數輛大卡車駛過後造成路面變形。\n\n請各部會針對此次事件調適行動措施不足或可改善之處進行報告，並說明後續針對各項事件之調適作為。",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 161,
+          "phase": 6,
+          "id": "6.3",
+          "event": "行動規劃",
+          "dept": "環境部氣候署",
+          "content": "報告指揮官，針對本次 40℃ 極端高溫與大停電的複合壓力測試，氣候署總結檢討如下：\n本次事件證明，極端熱浪已不再是單純的氣象事件，而是能引發電網、交通與醫療連鎖崩潰的系統性風險。我們現有的都市硬體防線，在熱蓄積與停電的雙重打擊下已達物理極限。\n\n針對本次事件，我們未來將推動的核心調適對策有二：\n第一，我們將推動「極端高溫納入災防法」。未來一旦再度發生類似事件，地方政府與中央就有了明確的法源，可以在極端高溫發生時採取具備強制力的調適行動措施。\n第二，本次演練中，「抗高溫涼適地圖」成功協助了醫療冷卻站的選址，「高溫風險調適平台」則讓地方單位與社福單位快速掌握弱勢族群並進行精準訪視。氣候署下一步將把此地圖繼續擴充，將衛福部、消防署、林保署等高溫相關資料也一併納入介接，讓此高溫調適行動之決策工具更加完善。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 162,
+          "phase": 6,
+          "id": "6.4",
+          "event": "行動規劃",
+          "dept": "環境部環管署",
+          "content": "未來的核心調適對策，本署將啟動「全國焚化廠韌性升級計畫」。強制要求所有具備發電能力之大型焚化廠，必須具備「設施獨立運行」與「微電網區域供電」的能力。在未來大停電時，焚化廠必須能直接供應周邊 5 公里內的關鍵設施（如醫院、避難所）用電。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 163,
+          "phase": 6,
+          "id": "6.5",
+          "event": "行動規劃",
+          "dept": "環境部循環署",
+          "content": "針對 Day 2 戶外工作者發生熱衰竭之風險，將研擬極端高溫下的資源回收體系作業指引（例如：彈性調整清潔隊員與回收業者的收運時間），保障第一線環保人員的安全。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 164,
+          "phase": 6,
+          "id": "6.6",
+          "event": "行動規劃",
+          "dept": "交通部",
+          "content": "1.在公共工程設計和施工規範中納入高溫考量，例如採用耐高溫材料、調整施工時間。\n2.提升運輸系統高溫耐受力/回復力。\n3.強化運輸系統決策支援力。\n4.配合農業部，強化農產品冷鏈運輸與基礎設施。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 165,
+          "phase": 6,
+          "id": "6.7",
+          "event": "行動規劃",
+          "dept": "交通部氣象署",
+          "content": "精進高溫監測與預測能力，發展日、週、月、季高溫預報技術，強化跨域合作應用服務。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 166,
+          "phase": 6,
+          "id": "6.8",
+          "event": "行動規劃",
+          "dept": "數發部",
+          "content": "1.補助電信業者建置通傳會指定防救災基地臺。\n2.提升行動通信基地臺災時通訊可用性。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 167,
+          "phase": 6,
+          "id": "6.9",
+          "event": "行動規劃",
+          "dept": "國發會",
+          "content": "第一，推動「公共建設氣候壓力測試」法制化： 即日起，凡提報國發會審議之重大公共建設預算案，必須全面導入「氣候風險與韌性評估」。針對極端高溫與斷電情境，若計畫未具備相應的備援機制與優雅降級方案，國發會將不予核定預算，從源頭汰除脆弱的基礎設施。\n\n第二，將「抗高溫涼適地圖」納入國土與都更上位計畫： 國發會高度肯定環境部開發之涼適地圖。未來我們將協同內政部，要求各地方政府在擬定國土計畫、都市更新與大型園區開發時，必須強制套疊此圖資。對於高溫紅區，嚴格規範建築退縮、確保都市風廊暢通，並拉高綠覆率標準，以空間手段根本解決都市熱島效應。\n\n第三，落實氣候變遷下之「公正轉型」： 考量本次災情中，鐵皮屋聚落與戶外勞動者承受了最嚴重的熱危害，國發會將於下一期國家發展計畫中匡列「氣候調適專案基金」。針對系統標示的極端熱區，優先補助弱勢家戶進行屋頂隔熱改建，並協助高齡社福機構建置獨立的儲能與太陽能微電網，確保氣候調適的路上，不遺落任何一個脆弱族群。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 168,
+          "phase": 6,
+          "id": "6.10",
+          "event": "行動規劃",
+          "dept": "國科會",
+          "content": "1.進行臺灣本土化的氣候變遷推估研究。\n2.發展高溫影響評估工具與模型。\n3.研發高溫調適關鍵技術。\n4.建立科學數據分享平台，支援各部會決策。\n5.加強國際科研合作，引進先進知識與技術。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 169,
+          "phase": 6,
+          "id": "6.11",
+          "event": "行動規劃",
+          "dept": "勞動部職安署",
+          "content": "1.修訂高溫相關法規及強化預防功能。\n2.依產業工種制定高溫調適策略，建立保護勞工的SOP。\n3.結合民間企業資源，加強預防高溫保護措施。\n4.強化跨部會與地方政府合作減災。\n5.改進職場熱壓力相關疾病及死亡的監測機制。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 170,
+          "phase": 6,
+          "id": "6.12",
+          "event": "行動規劃",
+          "dept": "衛福部",
+          "content": "1.強化醫療體系應對熱傷害的能力，包括到院前緊急醫療和醫院系統的熱傷害處理能力。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 171,
+          "phase": 6,
+          "id": "6.13",
+          "event": "行動規劃",
+          "dept": "農業部",
+          "content": "1.建置農作物災害預警平台及APP，提供災害風險資訊。\n2.提高農業用水效率，發展節能節水新形態農業。\n3.研發耐高溫、耐旱等能因應氣候變遷的品種。\n4.推動智慧化栽培設施，改善作物生長環境。\n5.高溫剩食處理與加工輔導。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 172,
+          "phase": 6,
+          "id": "6.14",
+          "event": "行動規劃",
+          "dept": "農業部林保署",
+          "content": "1.推動公眾參與機制，輔導自主成立森林義勇消防隊，培訓林火知識與救災技巧。\n2.進行林火災害潛勢及危險度分析，強化災害事故調查及森林火災風險評估策略，運用災防告警系統或社群媒體發布預警。\n3.發展數位化森林火災防救指揮系統，強化救災指揮與協調效能。\n4.推動森林火災防救基礎研究、燃料管理及相關防救災技術開發。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 173,
+          "phase": 6,
+          "id": "6.15",
+          "event": "行動規劃",
+          "dept": "經濟部產發署",
+          "content": "1.評估高溫對不同產業的影響，制定差異化調適策略。\n2.支援企業應用節能降溫技術與措施。\n3.建立產業高溫風險評估與預警系統。\n4.加強對中小企業的高溫調適支援。\n5.鼓勵產業進行技術創新，開發適應高溫環境的新產品和新服務。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 174,
+          "phase": 6,
+          "id": "6.16",
+          "event": "行動規劃",
+          "dept": "經濟部能源署",
+          "content": "1.推動智慧電網與產業風險治理。\n2.建立能源緊急調適行動機制，應對極端高溫可能導致的用電需求激增。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 175,
+          "phase": 6,
+          "id": "6.17",
+          "event": "行動規劃",
+          "dept": "經濟部水利署",
+          "content": "1.建置乾旱預警系統，及早因應高溫可能導致的水資源短缺。\n2.改善水資源調配，提高水資源利用效率。\n3.加強水庫水質管理，應對高溫下水質惡化問題。\n4.推動節水技術與措施應用。\n5.強化跨流域水資源調度能力。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 176,
+          "phase": 6,
+          "id": "6.18",
+          "event": "行動規劃",
+          "dept": "內政部國土署",
+          "content": "1.推動城市綠化與透水鋪面，減緩熱島效應。\n2.推廣綠建築標章及相關協助作業。\n3.推動校園綠建築設計，減低環境負荷與降低室內溫度。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 505,
+          "phase": 6,
+          "id": "6.18a",
+          "event": "行動規劃",
+          "dept": "內政部國家公園署",
+          "content": "",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 506,
+          "phase": 6,
+          "id": "6.18b",
+          "event": "行動規劃",
+          "dept": "內政部消防署",
+          "content": "",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 507,
+          "phase": 6,
+          "id": "6.18c",
+          "event": "行動規劃",
+          "dept": "內政部警政署",
+          "content": "",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 177,
+          "phase": 6,
+          "id": "6.19",
+          "event": "行動規劃",
+          "dept": "教育部",
+          "content": "1.「配合氣象署開發之「樂活氣象App」學校客製化高溫警示，辦理熱傷害衛教宣導。\n2.平時強化校園熱傷害衛教宣導，提高防護意識。\n3.改善運動空間，如增設室內設施或有頂棚體育場。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 178,
+          "phase": 6,
+          "id": "6.20",
+          "event": "行動規劃",
+          "dept": "文化部",
+          "content": "1.加強對文化資產（如古蹟、歷史建築）在高溫下的保護措施（如控制溫濕度）及監測（如受高溫可能導致的材質劣化、結構損害、濕度變化、生物危害）。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 179,
+          "phase": 6,
+          "id": "6.21",
+          "event": "行動規劃",
+          "dept": "金管會",
+          "content": "1.推動氣候風險評估與揭露機制。\n2.發展高溫相關保險商品，分散極端氣候風險。\n3.引導金融資源投入高溫調適產業與技術。\n4.強化金融機構對氣候風險的識別與管理能力。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 180,
+          "phase": 6,
+          "id": "6.22",
+          "event": "行動規劃",
+          "dept": "原民會",
+          "content": "1.評估氣候變遷（包括高溫）對原住民族地區傳統生計（如農業、漁獵）和文化活動的影響。\n2.結合傳統知識和現代技術，發展適合原住民族地區的高溫調適方法。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 181,
+          "phase": 6,
+          "id": "6.23",
+          "event": "行動規劃",
+          "dept": "海委會",
+          "content": "1.持續監測珊瑚白化狀況，包括參考美國NOAA珊瑚監測網預警資訊，規劃珊瑚保育及因應措施。\n2.進行海域生態監測，關注海溫及生物多樣性是否因氣候變遷而變化。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 240,
+          "phase": 6,
+          "id": "6.23a",
+          "event": "行動規劃",
+          "dept": "行政院公共工程委員會",
+          "content": "（待單位填寫）",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 241,
+          "phase": 6,
+          "id": "6.23b",
+          "event": "行動規劃",
+          "dept": "國家通訊傳播委員會",
+          "content": "（待單位填寫）",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 242,
+          "phase": 6,
+          "id": "6.23c",
+          "event": "行動規劃",
+          "dept": "交通部觀光署",
+          "content": "（待單位填寫）",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 182,
+          "phase": 6,
+          "id": "6.24",
+          "event": "行動規劃",
+          "dept": "臺北市政府",
+          "content": "硬體設施升級（工務局 / 捷運公司）： 全面檢修文湖線受損軌道與內湖區軟化路面。未來新鋪設路面應評估導入耐高溫的改質瀝青；捷運軌道需強化耐熱材質與擴充降溫設備。\n\n強化空間風險圖資應用（資訊局 / 災防辦）： 彙整本次內湖區的停電、交通癱瘓與熱傷害送醫熱點，將這些災情數據疊圖分析。未來應常態性運用這類高溫風險儀表板，作為城市防災空間規劃、綠化植載配置、以及微電網建設的決策依據。\n\n能源備援檢討（產發局 / 交通局）： 針對重要交通號誌與大眾運輸系統，要求擴充不斷電系統的時效，或引入太陽能與儲能設備的獨立供電設計，確保下次區域停電時，關鍵交通動脈不會瞬間癱瘓。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 183,
+          "phase": 6,
+          "id": "6.25",
+          "event": "行動規劃",
+          "dept": "新北市政府",
+          "content": "經發局 / 城鄉局： 輔導五股產業園區的工廠導入「微電網」與「儲能系統」，並推動鐵皮廠房的屋頂綠化與太陽能板建置，降低廠房室內溫度與對單一電網的依賴。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 184,
+          "phase": 6,
+          "id": "6.26",
+          "event": "行動規劃",
+          "dept": "桃園市政府",
+          "content": "都發局 / 工務局： 檢討蘆竹區的都市熱島效應，未來在南崁及大竹等人口密集區，以及新開發的物流園區，強制要求提高綠覆率與透水鋪面比例。\n\n工務局： 針對大型物流車輛行經的重要路段，全面評估改用抗車轍、耐高溫的改質瀝青混凝土，提升道路在極端高溫下的乘載力與壽命。",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 186,
+          "phase": 7,
+          "id": "7.1",
+          "event": "演練階段說明",
+          "dept": "司儀",
+          "content": "本次演練結束，此階段邀請到幾位專家學者針對本次演練進行評核，也邀請本次參與演練的部會進行自評，詳細內容由主推官來進行說明",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": true
+        },
+        {
+          "row": 187,
+          "phase": 7,
+          "id": "7.2",
+          "event": "任務完成說明",
+          "dept": "主推官",
+          "content": "感謝各部會及地方政府的努力，高溫調適行動執行期間，共協調17個跨部會共同執行調適措施，有效協助高溫調適行動。\n中央部會及地方政府共計發出23則新聞宣傳提醒、FB共12則防熱措施宣導。\n同時，40℃高溫突發狀況造成之停電與路面異常隆起事件，\n因應氣候變遷，參考國科會、國家災害防救科技中心NCDR...等單位對未來氣候變遷之中長期研究，\n未來極端高溫出現之頻率可能增加，請各單位參考國科會、國家災害防救科技中心NCDR...等相關研究，持續做好高溫守視及調適整備工作。\n在此階段，首先我們先邀請今日參與的專家學者針對本次演練提供建議",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 188,
+          "phase": 7,
+          "id": "7.3",
+          "event": "專家評核",
+          "dept": "",
+          "content": "",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 189,
+          "phase": 7,
+          "id": "7.4",
+          "event": "指派說明",
+          "dept": "主推官",
+          "content": "感謝XX委員提供之建議，接著請參與部會針對今日演練表現進行自評及分享",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 190,
+          "phase": 7,
+          "id": "7.5",
+          "event": "部會評核",
+          "dept": "",
+          "content": "",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": false
+        },
+        {
+          "row": 192,
+          "phase": 8,
+          "id": "8.1",
+          "event": "演練階段說明",
+          "dept": "司儀",
+          "content": "此階段將會進行實兵演練，邀請與會長官和部會移動至實兵演練的場地觀摩",
+          "editable": false,
+          "fill": "blue",
+          "isIntro": true
+        },
+        {
+          "row": 193,
+          "phase": 8,
+          "id": "8.2",
+          "event": "任務指派",
+          "dept": "主推官",
+          "content": "",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 194,
+          "phase": 8,
+          "id": "8.3",
+          "event": "演練說明",
+          "dept": "環境部氣候署",
+          "content": "",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        },
+        {
+          "row": 195,
+          "phase": 8,
+          "id": "8.4",
+          "event": "演練說明",
+          "dept": "衛福部",
+          "content": "",
+          "editable": true,
+          "fill": "yellow",
+          "isIntro": false
+        }
+      ]
+    };
+
+
+    /* ─── Phase metadata ─── */
+    const PHASE_LABELS = {
+      0: { short: "演練說明", day: "", desc: "總覽與說明" },
+      1: { short: "階段一", day: "DAY-2~-1", desc: "高溫預警" },
+      2: { short: "階段二", day: "DAY0", desc: "調適行動會議" },
+      3: { short: "階段三", day: "DAY0", desc: "初步失能" },
+      4: { short: "階段四", day: "DAY1", desc: "損害累積" },
+      5: { short: "階段五", day: "DAY2", desc: "災情惡化" },
+      6: { short: "階段六", day: "DAY3", desc: "狀況解除" },
+      7: { short: "階段七", day: "", desc: "評核自評" },
+      8: { short: "階段八", day: "", desc: "實兵演練" },
+      9: { short: "匯出腳本", day: "", desc: "Excel下載" },
+    };
+
+    const PHASE_DETAIL = {
+      1: {
+        title: "演練準備階段（高溫預警）", day: "DAY -2 / -1", color: "theme-1", icon: "🌡️",
+        summary: "連續高溫影響下，氣象署發布紅燈預警，環境部通知各部會啟動人員與物資整備，並透過多管道提醒民眾利用 CoolMap 查詢涼爽點。",
+        events: []
+      },
+      2: {
+        title: "召開高溫調適行動會議", day: "DAY 0 上午", color: "theme-2", icon: "🏛️",
+        summary: "台北市內湖區、新北市五股區、桃園市蘆竹區測站測得 40℃。環境部召開高溫調適行動會議，各部會說明今日調適行動措施規劃。",
+        events: []
+      },
+      3: {
+        title: "40℃ 高溫 — 初步失能徵兆", day: "DAY 0 下午", color: "theme-3", icon: "⚡",
+        summary: "上午會議後各部會執行調適行動措施，北北桃三區基礎維生設施出現失能徵兆。各部會回報情況並採取積極行動，傍晚 18:00 進行成果回報。",
+        events: ["變電所溫度達 60°C，出現過載預警", "北捷文湖線軌溫達 60°C", "部分路段柏油軟化，車輛無法通行"]
+      },
+      4: {
+        title: "40℃ 高溫 — 損害累積", day: "DAY 1 全天", color: "theme-4", icon: "🔥",
+        summary: "連日高溫累積，北區發電機組過載，發生區域性停電，多處主幹道交通號誌停擺；空氣品質臭氧指標升至紅色警示（AQI 151-200）。",
+        events: ["區域性停電，交通號誌停擺", "臭氧 AQI 達紅色警示等級 151-200", "各部會啟動停電調適行動與交通管制"]
+      },
+      5: {
+        title: "40℃ 高溫 — 災情惡化", day: "DAY 2 全天", color: "theme-5", icon: "🚨",
+        summary: "大範圍停電導致文湖線捷運停擺，民眾受困車廂；100 人以上熱傷害急診湧入，醫療量能嚴重過載。為本次演練最嚴峻的複合災害情境。",
+        events: ["文湖線捷運停擺，民眾受困疏散", "100+ 熱傷害急診病患湧入，醫療量能過載", "大範圍停電複合交通、醫療、民生危機"]
+      },
+      6: {
+        title: "高溫緊急危害狀況解除", day: "DAY 3", color: "theme-6", icon: "✅",
+        summary: "溫度下降，高溫突發災害事件解除。各部會針對本次事件進行全面檢討，並提出後續調適對策與長期方針，納入國家氣候調適政策。",
+        events: []
+      },
+      7: {
+        title: "調適行動演練結束（評核階段）", day: "演練尾聲", color: "theme-7", icon: "📊",
+        summary: "演練正式結束。邀請專家學者進行評核，並請各參演部會就本次演練表現進行自評與分享，作為後續精進依據。",
+        events: []
+      },
+      8: {
+        title: "實兵演練階段", day: "現場演練", color: "theme-8", icon: "🏃",
+        summary: "邀請與會長官及各部會移至實兵演練場地，由環境部、衛福部、地方政府針對 DAY2 醫療體系過載情境進行緊急調適行動實兵演練。",
+        events: []
+      },
+      9: {
+        title: "匯出演練腳本", day: "離線使用", color: "theme-1", icon: "📥",
+        summary: "將目前已經定稿的各階段腳本打包匯出成 Excel。每個階段會存放在 Excel 的獨立分頁中，供正式實兵演練時離線查看與列印。",
+        events: []
+      },
+    };
+
+    const PHASE_INTRO_SUMMARY = {
+      0: "",
+      1: "氣象署持續監測升溫趨勢，環境部超前部署通知各部會整備。",
+      2: "40℃ 首日，環境部召集各部會說明應處措施，確認調適行動機制啟動。",
+      3: "基礎設施出現初步失能，各部會啟動應對行動並於傍晚完成成果回報。",
+      4: "停電衝擊擴大，交通與空品雙重告急，損害持續累積。",
+      5: "複合災害爆發，醫療、交通、供電三線同時告急，考驗跨部會協調極限。",
+      6: "危機解除，各部會提出調適方針，強化未來韌性。",
+      7: "評核階段，彙整演練成效，擬定精進方向。",
+      8: "實兵演練，驗證跨部會緊急調適行動實際能力。",
+    };
+
+    let activePhase = 0;
+    let edits = {};
+    let resets = new Set();
+    let selectedDepts = new Set();
+    let isAdmin = new URLSearchParams(location.search).get('admin') === '1';
+    let showDeleted = false;
+    let sortableInstance = null;
+    let structUploadTimer = null;
+    try { edits = JSON.parse(localStorage.getItem('heatDrillEdits3') || '{}'); } catch (e) { }
+    function persistEdits() { localStorage.setItem('heatDrillEdits3', JSON.stringify(edits)); }
+
+    /* ─── 自動初始化 order / deleted（所有裝置結果一致） ─── */
+    function initStructureFields() {
+      const byPhase = {};
+      DATA.entries.forEach(e => {
+        if (typeof e.deleted === 'undefined') e.deleted = false;
+        if (!byPhase[e.phase]) byPhase[e.phase] = [];
+        byPhase[e.phase].push(e);
+      });
+      Object.keys(byPhase).forEach(p => {
+        byPhase[p].forEach((e, idx) => {
+          if (typeof e.order !== 'number') e.order = (idx + 1) * 10;
+        });
+      });
+    }
+    initStructureFields();
+
+    /* ─── 結構變更 debounce 上傳（策略 C） ─── */
+    function scheduleStructuralUpload(immediate) {
+      if (structUploadTimer) { clearTimeout(structUploadTimer); structUploadTimer = null; }
+      const run = () => uploadStructural();
+      if (immediate) run(); else structUploadTimer = setTimeout(run, 1000);
+    }
+
+    function uploadStructural() {
+      if (typeof SCRIPT_URL === 'undefined' || SCRIPT_URL.includes('###')) return;
+      const payload = DATA.entries.map(e => ({
+        row: e.row,
+        order: e.order,
+        deleted: !!e.deleted,
+        structural: true
+      }));
+      const badge = document.getElementById('structSyncBadge');
+      if (badge) { badge.style.display = 'block'; badge.innerHTML = '🔄 結構同步中...'; badge.style.background = 'rgba(234,88,12,0.9)'; }
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'saveStructure', items: payload })
+      })
+        .then(res => res.json())
+        .then(result => {
+          if (badge) {
+            if (result && result.status === 'success') {
+              badge.innerHTML = '✅ 結構已同步';
+              badge.style.background = 'rgba(22,163,74,0.9)';
+            } else {
+              badge.innerHTML = '⚠️ 同步失敗';
+              badge.style.background = 'rgba(220,38,38,0.9)';
+            }
+            setTimeout(() => { badge.style.display = 'none'; }, 2500);
+          }
+        })
+        .catch(() => {
+          if (badge) {
+            badge.innerHTML = '⚠️ 同步時發生錯誤';
+            badge.style.background = 'rgba(220,38,38,0.9)';
+            setTimeout(() => { badge.style.display = 'none'; }, 2500);
+          }
+        });
+    }
+
+    function getDeptClass(dept) {
+      if (dept.includes('環境部')) return 'dept-env';
+      if (dept === '司儀' || dept.includes('主推官')) return 'dept-mc';
+      if (dept.includes('市政府')) return 'dept-local';
+      return 'dept';
+    }
+    function escHtml(s) {
+      if (!s) return '';
+      return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    /* ─── Tabs ─── */
+    function initTabs() {
+      const tabs = document.getElementById('tabs');
+      DATA.phases.forEach(p => {
+        const info = PHASE_LABELS[p.phase];
+        const div = document.createElement('div');
+        div.className = 'tab' + (p.phase === 0 ? ' active' : '');
+        const dayLine = info.day ? info.day + ' · ' + info.desc : info.desc;
+        div.innerHTML = info.short + '<span class="day">' + dayLine + '</span>';
+        div.onclick = () => switchPhase(p.phase);
+        div.dataset.phase = p.phase;
+        tabs.appendChild(div);
+      });
+    }
+
+    function initDeptFilter() {
+      const container = document.getElementById('deptChips');
+      container.innerHTML = '';
+      const depts = [...new Set(DATA.entries.filter(e => e.dept && e.dept !== '司儀').map(e => e.dept))].sort();
+
+      const allChip = document.createElement('div');
+      allChip.className = 'dept-chip active';
+      allChip.textContent = '全部單位';
+      allChip.onclick = () => {
+        selectedDepts.clear();
+        renderChips();
+        renderCards();
+      };
+      container.appendChild(allChip);
+
+      depts.forEach(d => {
+        const chip = document.createElement('div');
+        chip.className = 'dept-chip';
+        chip.textContent = d;
+        chip.onclick = () => {
+          if (selectedDepts.has(d)) {
+            selectedDepts.delete(d);
+          } else {
+            selectedDepts.add(d);
+          }
+          renderChips();
+          renderCards();
+        };
+        container.appendChild(chip);
+      });
+      document.getElementById('editableOnly').onchange = renderCards;
+    }
+
+    function renderChips() {
+      const chips = document.getElementById('deptChips').children;
+      chips[0].classList.toggle('active', selectedDepts.size === 0);
+      for (let i = 1; i < chips.length; i++) {
+        chips[i].classList.toggle('active', selectedDepts.has(chips[i].textContent));
+      }
+    }
+
+    function switchPhase(phase) {
+      activePhase = phase;
+      document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', parseInt(t.dataset.phase) === phase));
+      render();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    /* ─── Render ─── */
+    function render() {
+      if (activePhase === 0) { renderIntroPage(); return; }
+      renderScenarioBlock();
+      renderCards();
+    }
+
+    /* ── 演練說明頁 ── */
+    function renderIntroPage() {
+      document.getElementById('scenarioWrapper').innerHTML = '';
+      document.getElementById('filterBar').style.display = 'none';
+      document.getElementById('submitBar').style.display = 'none';
+
+      const phase0entries = DATA.entries.filter(e => e.phase === 0);
+      const stageDesc = phase0entries.find(e => e.event.includes('演練階段說明'));
+      const bgDesc = phase0entries.find(e => e.event.includes('演練背景說明'));
+
+      const phaseCards = [1, 2, 3, 4, 5, 6, 7, 8].map(n => {
+        const d = PHASE_DETAIL[n];
+        const l = PHASE_LABELS[n];
+        const colorCls = 'pc-col' + n;
+        return `<div class="phase-card ${colorCls}" onclick="switchPhase(${n})">
+      <div class="pc-badge">${l.short}${l.day ? ' · ' + l.day : ''}</div>
+      <div class="pc-title">${escHtml(d.title)}</div>
+      <div class="pc-desc">${escHtml(PHASE_INTRO_SUMMARY[n])}</div>
+    </div>`;
+      }).join('');
+
+      // Parse stage descriptions from 0.2
+      const stageLines = stageDesc ? stageDesc.content : '';
+
+      const html = `
+  <div class="intro-page">
+    <div class="intro-hero">
+      <div class="label">115年度 · 40℃高溫即時調適行動演練</div>
+      <h2>各部會腳本協作平台</h2>
+      <p>本平台提供各部會在 40℃ 極端高溫複合災害情境下，逐一確認與撰寫各階段的調適行動腳本。\n請各部會依據自身業務，填寫實際作業內容，以完成本次演練腳本初版。</p>
+      ${bgDesc ? `<div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid rgba(255, 255, 255, 0.2);">
+        <h3 style="font-size: 18px; margin-bottom: 8px; font-weight: 700; color: #fff;">演練背景說明</h3>
+        <p>${escHtml(bgDesc.content).replace(/\n+/g, '\n')}</p>
+      </div>` : ''}
+    </div>
+
+    <div class="ht-timeline">
+      <div class="ht-title">高溫 40°C 演練情境與事件時序</div>
+      <div class="ht-sub">台北市內湖區 ／ 新北市五股區 ／ 桃園市蘆竹區</div>
+      <div class="ht-divider"></div>
+      <div class="ht-sev-row"><div class="ht-sev-line"></div><div class="ht-sev-arrow"></div></div>
+      <div class="ht-sev-labels">
+        <div class="ht-sev-label ht-sl0"><span></span>低</div>
+        <div class="ht-sev-label ht-sl1"><span></span>中</div>
+        <div class="ht-sev-label ht-sl2"><span></span>高</div>
+        <div class="ht-sev-label ht-sl3"><span></span>緩和</div>
+      </div>
+      <div class="ht-grid">
+        <div class="ht-phase ht-p0">
+          <div class="ht-phase-head">
+            <div class="ht-phase-day">Day 0 — 第1天 40°C</div>
+            <div class="ht-phase-label">初步失能（零星災害）</div>
+          </div>
+          <div class="ht-phase-temp">40°C</div>
+          <div class="ht-events">
+            <div class="ht-ev-card"><span class="ht-dot ht-dot-energy"></span>台北市發生<b style="font-weight:500">饋線事故</b>，影響上千住宅，三總啟動備載電力</div>
+            <div class="ht-ev-card"><span class="ht-dot ht-dot-health"></span>敏感脆弱族群（年幼／年長者）熱傷害，<b style="font-weight:500">60人以上</b>急診送醫，有中重症</div>
+            <div class="ht-ev-card"><span class="ht-dot ht-dot-water"></span>晚間限電導致<b style="font-weight:500">加壓站停擺</b>，引發停水</div>
+          </div>
+        </div>
+        <div class="ht-phase ht-p1">
+          <div class="ht-phase-head">
+            <div class="ht-phase-day">Day 1 — 第2天 40°C</div>
+            <div class="ht-phase-label">損害累積（災害擴大）</div>
+          </div>
+          <div class="ht-phase-temp">40°C</div>
+          <div class="ht-events">
+            <div class="ht-ev-card"><span class="ht-dot ht-dot-infra"></span>北捷文湖線軌溫達 <b style="font-weight:500">60°C 停駛</b>（西湖站至東湖站）</div>
+            <div class="ht-ev-card"><span class="ht-dot ht-dot-health"></span>戶外工作者（營造／外送／軍警消）及慢性病患熱傷害，<b style="font-weight:500">50人以上</b>急診送醫</div>
+          </div>
+        </div>
+        <div class="ht-phase ht-p2">
+          <div class="ht-phase-head">
+            <div class="ht-phase-day">Day 2 — 第3天 40°C</div>
+            <div class="ht-phase-label">災情惡化（連鎖效應）</div>
+          </div>
+          <div class="ht-phase-temp">40°C</div>
+          <div class="ht-events">
+            <div class="ht-ev-card"><span class="ht-dot ht-dot-urban"></span>新北市晚間零星區域出現<b style="font-weight:500">堆置垃圾悶燒</b></div>
+            <div class="ht-ev-card"><span class="ht-dot ht-dot-infra"></span>五股、內湖、蘆竹工業區路段<b style="font-weight:500">柏油軟化</b>，大卡車駛過致路面變形</div>
+          </div>
+        </div>
+        <div class="ht-phase ht-p3">
+          <div class="ht-phase-head">
+            <div class="ht-phase-day">Day 3 — 橙燈</div>
+            <div class="ht-phase-label">復原調適</div>
+          </div>
+          <div class="ht-phase-temp">37°C ↓</div>
+          <div class="ht-events">
+            <div class="ht-ev-card"><span class="ht-dot ht-dot-recover"></span>氣溫下降，連日 <b style="font-weight:500">40°C 預警解除</b></div>
+            <div class="ht-ev-card"><span class="ht-dot ht-dot-recover"></span>比對實際成災區域與地方氣候<b style="font-weight:500">調適計畫風險區</b>落差</div>
+            <div class="ht-ev-card"><span class="ht-dot ht-dot-recover"></span>檢視調適措施<b style="font-weight:500">執行成效</b>，評估精進方向</div>
+          </div>
+        </div>
+      </div>
+      <div class="ht-legend">
+        <div class="ht-leg-item"><span class="ht-dot ht-dot-infra"></span>維生基礎設施</div>
+        <div class="ht-leg-item"><span class="ht-dot ht-dot-health"></span>健康</div>
+        <div class="ht-leg-item"><span class="ht-dot ht-dot-monitor"></span>高溫監控預警</div>
+        <div class="ht-leg-item"><span class="ht-dot ht-dot-energy"></span>能源及產業</div>
+        <div class="ht-leg-item"><span class="ht-dot ht-dot-urban"></span>都市環境改善</div>
+        <div class="ht-leg-item"><span class="ht-dot ht-dot-food"></span>糧食</div>
+        <div class="ht-leg-item"><span class="ht-dot ht-dot-eco"></span>生態</div>
+        <div class="ht-leg-item"><span class="ht-dot ht-dot-culture"></span>文化資產</div>
+        <div class="ht-leg-item"><span class="ht-dot ht-dot-water"></span>水資源</div>
+        <div class="ht-leg-item"><span class="ht-dot ht-dot-capacity"></span>能力建構及其他</div>
+      </div>
+      <div class="ht-measures-title">各面向高溫調適行動處置措施與調適對策</div>
+      <div class="ht-measures-grid">
+        <div class="ht-m-card ht-mi">
+          <div class="ht-m-card-head"><span class="ht-dot ht-dot-infra"></span>維生基礎設施</div>
+          <div class="ht-m-card-body">
+            <div>公共工程納入耐高溫材料設計</div>
+            <div>軌溫監測達55°C啟動巡檢降速</div>
+            <div>號誌加裝UPS不斷電系統</div>
+            <div>路面改用耐高溫改質瀝青</div>
+            <div>加壓站備援發電機進駐</div>
+          </div>
+        </div>
+        <div class="ht-m-card ht-mh">
+          <div class="ht-m-card-head"><span class="ht-dot ht-dot-health"></span>健康</div>
+          <div class="ht-m-card-body">
+            <div>啟動大量傷病患(MCI)分流機制</div>
+            <div>開設戶外緊急降溫站</div>
+            <div>醫療院所盤點備援發電機</div>
+            <div>弱勢族群強制訪視與物資發放</div>
+            <div>預防熱傷害衛教宣導</div>
+          </div>
+        </div>
+        <div class="ht-m-card ht-mm">
+          <div class="ht-m-card-head"><span class="ht-dot ht-dot-monitor"></span>高溫監控預警</div>
+          <div class="ht-m-card-body">
+            <div>發布高溫紅色燈號及WBGT警示</div>
+            <div>樂活氣象App分眾防護推播</div>
+            <div>精進日/週/月/季預報技術</div>
+            <div>RODS系統監測熱急症人次</div>
+          </div>
+        </div>
+        <div class="ht-m-card ht-me">
+          <div class="ht-m-card-head"><span class="ht-dot ht-dot-energy"></span>能源及產業</div>
+          <div class="ht-m-card-body">
+            <div>尖峰用電轉離峰價格誘因</div>
+            <div>保命優先供電與分區輪停</div>
+            <div>工業區需量降載與強制停工</div>
+            <div>推動微電網與儲能系統</div>
+            <div>產業高溫風險評估與調適</div>
+          </div>
+        </div>
+        <div class="ht-m-card ht-mu">
+          <div class="ht-m-card-head"><span class="ht-dot ht-dot-urban"></span>都市環境改善</div>
+          <div class="ht-m-card-body">
+            <div>建置抗高溫涼適地圖(CoolMap)</div>
+            <div>指定避暑設施與冷卻收容所</div>
+            <div>灑水車降溫路面降溫10°C+</div>
+            <div>推動透水鋪面與城市綠化</div>
+            <div>建築節能降溫與綠建築推廣</div>
+          </div>
+        </div>
+        <div class="ht-m-card ht-mf">
+          <div class="ht-m-card-head"><span class="ht-dot ht-dot-food"></span>糧食</div>
+          <div class="ht-m-card-body">
+            <div>宣導避免高溫時段戶外農作</div>
+            <div>強化作物抗熱與畜禽降溫</div>
+            <div>研發耐高溫耐旱新品種</div>
+            <div>推動智慧化栽培設施</div>
+          </div>
+        </div>
+        <div class="ht-m-card ht-mc">
+          <div class="ht-m-card-head"><span class="ht-dot ht-dot-eco"></span>生態</div>
+          <div class="ht-m-card-body">
+            <div>無人機熱顯像儀監測林火</div>
+            <div>預先噴灑阻燃劑防範林火</div>
+            <div>珊瑚白化監測與保育措施</div>
+            <div>海域生態與生物多樣性監測</div>
+          </div>
+        </div>
+        <div class="ht-m-card ht-mcu">
+          <div class="ht-m-card-head"><span class="ht-dot ht-dot-culture"></span>文化資產</div>
+          <div class="ht-m-card-body">
+            <div>場館延長免費開放避暑據點</div>
+            <div>典藏庫房恆溫恆濕維生系統</div>
+            <div>加強古蹟高溫材質劣化監測</div>
+            <div>文化志工動員引導民眾</div>
+          </div>
+        </div>
+        <div class="ht-m-card ht-mw">
+          <div class="ht-m-card-head"><span class="ht-dot ht-dot-water"></span>水資源</div>
+          <div class="ht-m-card-body">
+            <div>監控全國水情與靈活調度</div>
+            <div>水力機組夜間兼顧發電用水</div>
+            <div>建置乾旱預警系統</div>
+            <div>加強水庫水質管理</div>
+          </div>
+        </div>
+        <div class="ht-m-card ht-mk">
+          <div class="ht-m-card-head"><span class="ht-dot ht-dot-capacity"></span>能力建構及其他</div>
+          <div class="ht-m-card-body">
+            <div>推動極端高溫納入災防法</div>
+            <div>公共建設氣候壓力測試法制化</div>
+            <div>氣候調適專案基金保障弱勢</div>
+            <div>氣候風險保險商品開發</div>
+            <div>高溫勞檢強化與法規修訂</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="intro-task-box">
+      <h3>📝 各部會填寫說明</h3>
+      <ul>
+        <li>本平台上方頁籤對應演練的 8 大階段，請逐一確認各自負責的欄位</li>
+        <li>標示 <span style="background:#fff9c4;color:#f57f17;padding:1px 8px;border-radius:10px;font-weight:700;font-size:13px;">● 待填寫</span> 的黃底區域為需要填寫的欄位，請依實際作業內容更新</li>
+        <li>每頁右上角可使用「篩選部會」快速定位自己的欄位</li>
+        <li>內容修改後自動儲存於瀏覽器，確認後請點擊頁面底部「送出」</li>
+      </ul>
+    </div>
+
+    <div class="intro-phases-title">📋 演練架構 — 8 大階段總覽</div>
+    <div class="intro-phases">${phaseCards}</div>
+  </div>`;
+
+      document.getElementById('content').innerHTML = html;
+      updateStats();
+    }
+
+    /* ── Scenario Block (Phase 1-8) ── */
+    function renderScenarioBlock() {
+      const wrapper = document.getElementById('scenarioWrapper');
+      const intros = DATA.entries.filter(e => e.phase === activePhase && e.isIntro);
+      const detail = PHASE_DETAIL[activePhase];
+      if (!detail) { wrapper.innerHTML = ''; return; }
+
+      // Merge all intro texts
+      const introText = intros.map(e => e.content).join('\n\n').trim();
+
+      // Parse numbered events from the text
+      const lines = introText.split('\n');
+      let summaryLines = [];
+      let eventLines = [];
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (/^[1-9][\.、]/.test(trimmed)) {
+          eventLines.push(trimmed.replace(/^[1-9][\.、]\s*/, ''));
+        } else if (trimmed && !trimmed.startsWith('演練階段')) {
+          summaryLines.push(trimmed);
+        }
+      }
+
+      // Use hardcoded events if none found in text, else use parsed
+      const eventsToShow = eventLines.length > 0 ? eventLines : detail.events;
+
+      const eventsHtml = eventsToShow.length > 0 ? `
+    <div class="sh-events">
+      <div class="sh-events-title">本階段情境事件</div>
+      <div class="sh-event-list">
+        ${eventsToShow.map(e => `<div class="sh-event-item">
+          <div class="sh-event-icon">⚠️</div>
+          <div class="sh-event-text">${escHtml(e)}</div>
+        </div>`).join('')}
+      </div>
+    </div>` : '';
+
+      const summaryText = summaryLines.filter(l => l.length > 5).join('\n') || detail.summary;
+
+      wrapper.innerHTML = `
+  <div class="scenario-wrapper">
+    <div class="scenario-hero ${detail.color}">
+      <div class="sh-top">
+        <div class="sh-badges">
+          <span class="sh-badge">${detail.icon} ${PHASE_LABELS[activePhase].short}</span>
+          <span class="sh-badge">${detail.day}</span>
+        </div>
+        <div class="sh-title">${escHtml(detail.title)}</div>
+        <div class="sh-summary">${escHtml(summaryText)}</div>
+      </div>
+      ${eventsHtml}
+    </div>
+  </div>`;
+    }
+
+    /* ── Cards ── */
+    function renderCards() {
+      // Phases 1 and 7 have no editable entries. Phase 9 is export only.
+      const noEditPhases = [1, 7, 9];
+      const shouldShowFilter = !noEditPhases.includes(activePhase);
+
+      document.getElementById('filterBar').style.display = shouldShowFilter ? 'flex' : 'none';
+      document.getElementById('submitBar').style.display = shouldShowFilter ? 'block' : 'none';
+
+      const container = document.getElementById('content');
+
+      if (activePhase === 9) {
+        container.innerHTML = `
+          <div style="background:#fff; border-radius:8px; padding:40px; text-align:center; margin-top:20px; box-shadow:var(--shadow);">
+            <div style="font-size:48px; margin-bottom:16px;">📊</div>
+            <h3 style="font-size:20px; font-weight:bold; color:#0d47a1; margin-bottom:12px;">匯出為 Excel 總表</h3>
+            <p style="font-size:15px; color:#666; margin-bottom:24px; line-height:1.6; max-width:600px; margin-left:auto; margin-right:auto;">點擊下方按鈕，系統將自動彙整第 1 至 8 階段的所有調適行動腳本（包含您的編輯紀錄），打包匯出為 .xlsx 格式檔案。Excel 檔案內會依各階段自動分拆為不同工作表，方便您在斷網或正式操演時列印或作離線參閱。</p>
+            <button onclick="exportToExcel()" style="background:linear-gradient(135deg, #1b5e20, #2e7d32); color:#fff; padding:14px 32px; border:none; border-radius:6px; font-size:16px; font-weight:bold; cursor:pointer; box-shadow:0 2px 6px rgba(27,94,32,0.3); transition:all .2s;">📥 匯出 Excel (全階段自動分頁)</button>
+          </div>
+        `;
+        return;
+      }
+
+      const editableOnly = document.getElementById('editableOnly').checked;
+
+      let entries = DATA.entries.filter(e => e.phase === activePhase && !e.isIntro);
+      // 依 order 排序
+      entries = entries.slice().sort((a, b) => (a.order || 0) - (b.order || 0));
+      // 過濾已刪除（admin 模式下若切換為「顯示已刪除」則保留）
+      if (!(isAdmin && showDeleted)) entries = entries.filter(e => !e.deleted);
+      if (selectedDepts.size > 0) entries = entries.filter(e => selectedDepts.has(e.dept));
+      if (editableOnly) entries = entries.filter(e => e.editable);
+
+      let html = '';
+      if (activePhase === 1) {
+        html = '<div style="text-align:center; padding:60px 20px; color:#666; font-size:18px; font-weight:bold; background:#fff; border-radius:8px; margin-top:20px; box-shadow:var(--shadow);">📝 此階段無須填寫</div>';
+      } else if (entries.length === 0 && activePhase !== 7) {
+        html = '<div class="empty-msg">此階段無符合條件的項目</div>';
+      }
+
+      entries.forEach(e => {
+        const evtFlat = e.event.replace(/\n/g, ' ');
+        if (e.dept === '司儀' && evtFlat === '演練階段說明' && !e.isIntro) {
+          html += `<div class="section-divider" data-row="${e.row}">${escHtml(e.content)}</div>`;
+          return;
+        }
+        const fillClass = e.editable ? 'yellow' : (e.fill === 'green' ? 'green' : 'blue');
+        const bgClass = e.editable ? 'bg-yellow' : (e.fill === 'green' ? 'bg-green' : 'bg-blue');
+        const currentContent = edits[e.row] !== undefined ? edits[e.row] : e.content;
+        const isEdited = edits[e.row] !== undefined && edits[e.row] !== e.content;
+        const deletedClass = e.deleted ? ' is-deleted' : '';
+
+        html += `<div class="card ${fillClass}${deletedClass}" data-row="${e.row}">`;
+        html += `<div class="drag-handle" title="拖拉調整順序">⋮⋮</div>`;
+        html += `<div class="card-header">`;
+        if (e.event) html += `<span class="badge event">${escHtml(evtFlat)}</span>`;
+        if (e.dept) html += `<span class="badge ${getDeptClass(e.dept)}">${escHtml(e.dept)}</span>`;
+        if (e.editable) {
+          html += `<span class="badge editable-tag">● 待填寫</span>`;
+          if (isEdited) html += `<span class="badge edited-tag">✓ 已修改</span>`;
+        } else {
+          html += `<span class="badge fixed-tag">固定腳本</span>`;
+        }
+        // Admin actions
+        html += `<span class="admin-actions">`;
+        if (e.deleted) {
+          html += `<button class="btn-restore" onclick="restoreCard(${e.row})">↩️ 還原</button>`;
+        } else {
+          html += `<button class="btn-del" onclick="deleteCard(${e.row})">🗑️ 刪除</button>`;
+        }
+        html += `</span>`;
+        html += `</div>`;
+
+        const canEdit = e.editable || isAdmin;
+        html += `<div class="card-body ${bgClass}">`;
+        if (canEdit) {
+          html += `<textarea class="edit-area" data-row="${e.row}" oninput="onEdit(this)">${escHtml(currentContent)}</textarea>`;
+        } else {
+          html += `<div class="content-text">${e.content ? escHtml(currentContent) : '<span style="color:#aaa;font-style:italic;">（尚無內容）</span>'}</div>`;
+        }
+        html += `</div>`;
+
+        if (canEdit) {
+          html += `<div class="card-footer">
+        <span class="saved-indicator" id="saved-${e.row}">✓ 已自動儲存</span>
+        <button class="btn btn-reset" onclick="resetCard(${e.row})">還原</button>
+      </div>`;
+        }
+        html += `</div>`;
+      });
+
+      // Admin 模式：底部加「新增卡片」按鈕（phase 1/7/9 除外）
+      if (isAdmin && !noEditPhases.includes(activePhase)) {
+        html += `<div style="text-align:center; padding:16px 0 8px;">
+          <button onclick="openAddCardModal()" style="padding:10px 28px; border:2px dashed #90caf9; border-radius:8px; background:transparent; color:#1565c0; font-size:14px; font-weight:600; cursor:pointer; transition:all .2s;" onmouseover="this.style.background='#e3f2fd'" onmouseout="this.style.background='transparent'">＋ 新增卡片</button>
+        </div>`;
+      }
+
+      container.innerHTML = html;
+      updateStats();
+      bindSortable();
+    }
+
+    /* ─── 拖拉排序（僅 admin 模式） ─── */
+    function bindSortable() {
+      if (!isAdmin) return;
+      if (sortableInstance) { sortableInstance.destroy(); sortableInstance = null; }
+      const container = document.getElementById('content');
+      if (!container) return;
+      sortableInstance = Sortable.create(container, {
+        animation: 150,
+        handle: '.drag-handle',
+        ghostClass: 'sortable-ghost',
+        chosenClass: 'sortable-chosen',
+        dragClass: 'sortable-drag',
+        forceFallback: true,
+        scroll: true,
+        scrollSensitivity: 100,
+        scrollSpeed: 20,
+        bubbleScroll: true,
+        onEnd: handleDragEnd
+      });
+    }
+
+    function handleDragEnd() {
+      const container = document.getElementById('content');
+      const nodes = Array.from(container.children).filter(el => el.dataset && el.dataset.row);
+      nodes.forEach((el, idx) => {
+        const row = parseInt(el.dataset.row);
+        const entry = DATA.entries.find(e => e.row === row);
+        if (entry) entry.order = (idx + 1) * 10;
+      });
+      scheduleStructuralUpload(false);
+    }
+
+    /* ─── 刪除 / 還原（僅 admin 模式） ─── */
+    function deleteCard(row) {
+      const entry = DATA.entries.find(e => e.row === row);
+      if (!entry) return;
+      if (!confirm('確定要刪除此卡片嗎？（可於管理模式下還原）')) return;
+      entry.deleted = true;
+      render();
+      scheduleStructuralUpload(true);
+    }
+
+    function restoreCard(row) {
+      const entry = DATA.entries.find(e => e.row === row);
+      if (!entry) return;
+      entry.deleted = false;
+      render();
+      scheduleStructuralUpload(true);
+    }
+
+    /* ─── 新增卡片 Modal ─── */
+    function openAddCardModal() {
+      // 填入階段選單
+      const phaseSelect = document.getElementById('acPhase');
+      phaseSelect.innerHTML = '';
+      [2,3,4,5,6,7,8].forEach(p => {
+        const label = PHASE_LABELS[p] ? PHASE_LABELS[p].short : ('階段' + p);
+        const opt = document.createElement('option');
+        opt.value = p;
+        opt.textContent = label;
+        if (p === activePhase) opt.selected = true;
+        phaseSelect.appendChild(opt);
+      });
+
+      // 填入部會下拉（從現有 DATA 撈，排除司儀）
+      const deptSelect = document.getElementById('acDeptSelect');
+      deptSelect.innerHTML = '<option value="">— 從現有單位選擇 —</option>';
+      const existingDepts = [...new Set(
+        DATA.entries
+          .filter(e => e.dept && e.dept !== '司儀')
+          .map(e => e.dept)
+      )].sort();
+      existingDepts.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d;
+        opt.textContent = d;
+        deptSelect.appendChild(opt);
+      });
+
+      // 清空其他欄位
+      document.getElementById('acEvent').value = '';
+      document.getElementById('acDeptCustom').value = '';
+      document.getElementById('acContent').value = '';
+      document.querySelector('input[name="acFill"][value="yellow"]').checked = true;
+
+      const modal = document.getElementById('addCardModal');
+      modal.style.display = 'flex';
+    }
+
+    function closeAddCardModal() {
+      document.getElementById('addCardModal').style.display = 'none';
+    }
+
+    function onDeptSelectChange() {
+      const val = document.getElementById('acDeptSelect').value;
+      if (val) document.getElementById('acDeptCustom').value = '';
+    }
+
+    function submitAddCard() {
+      const phase    = parseInt(document.getElementById('acPhase').value);
+      const event    = document.getElementById('acEvent').value.trim();
+      const deptSel  = document.getElementById('acDeptSelect').value;
+      const deptCust = document.getElementById('acDeptCustom').value.trim();
+      const dept     = deptCust || deptSel;
+      const content  = document.getElementById('acContent').value.trim();
+      const fillVal  = document.querySelector('input[name="acFill"]:checked').value;
+      const editable = fillVal === 'yellow';
+
+      if (!event) { alert('請填寫事件 / 項目名稱'); return; }
+      if (!dept)  { alert('請選擇或輸入負責部會'); return; }
+
+      // 產生唯一 row ID（從 10000 起，避免與既有 row 碰撞）
+      const newRow = 10000 + Math.floor(Date.now() % 9000000);
+
+      const newEntry = {
+        row:      newRow,
+        phase:    phase,
+        id:       'custom-' + newRow,
+        event:    event,
+        dept:     dept,
+        content:  content,
+        editable: editable,
+        fill:     fillVal,
+        isIntro:  false,
+        order:    0,
+        deleted:  false,
+        isCustom: true
+      };
+
+      // 1. 注入本地 DATA
+      DATA.entries.push(newEntry);
+
+      // 2. 立即同步到 GAS（appendRow）
+      const phaseLabel = PHASE_LABELS[phase] ? PHASE_LABELS[phase].short : String(phase);
+      fetch(SCRIPT_URL, {
+        method:  'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'saveContent',
+          items: [{
+            row:     newRow,
+            phase:   phaseLabel,
+            event:   event,
+            dept:    dept,
+            content: content,
+            order:   0,
+            deleted: false,
+            fill:    fillVal
+          }]
+        })
+      })
+      .then(r => r.json())
+      .then(res => {
+        if (res.status !== 'success') console.warn('新增卡片同步失敗', res);
+      })
+      .catch(err => console.warn('新增卡片網路錯誤', err));
+
+      // 3. 更新篩選 chips（新部會需要出現在 filter）
+      initDeptFilter();
+
+      // 4. 關閉 Modal，切換到對應階段並重繪
+      closeAddCardModal();
+      if (phase !== activePhase) switchPhase(phase);
+      else render();
+    }
+
+    // 點擊 Modal 背景關閉
+    document.getElementById('addCardModal').addEventListener('click', function(e) {
+      if (e.target === this) closeAddCardModal();
+    });
+
+    function onEdit(textarea) {
+      const row = parseInt(textarea.dataset.row);
+      edits[row] = textarea.value;
+      persistEdits();
+      const card = textarea.closest('.card');
+      const orig = DATA.entries.find(e => e.row === row);
+      if (orig) {
+        const changed = textarea.value !== orig.content;
+        let editedTag = card.querySelector('.badge.edited-tag');
+        const header = card.querySelector('.card-header');
+
+        if (changed && !editedTag) {
+          editedTag = document.createElement('span');
+          editedTag.className = 'badge edited-tag';
+          editedTag.textContent = '✓ 已修改';
+          header.appendChild(editedTag);
+        } else if (!changed && editedTag) {
+          editedTag.remove();
+        }
+      }
+      const ind = document.getElementById('saved-' + row);
+      if (ind) {
+        ind.style.display = 'inline';
+        clearTimeout(ind._t);
+        ind._t = setTimeout(() => ind.style.display = 'none', 1500);
+      }
+      updateStats();
+      scheduleIdleReminder();
+    }
+
+    function resetCard(row) {
+      const orig = DATA.entries.find(e => e.row === row);
+      if (!orig || !confirm('確定要還原為初始內容嗎？')) return;
+      delete edits[row];
+      resets.add(row);
+      persistEdits();
+      render();
+    }
+
+    function updateStats() {
+      // Admin 模式：固定卡片也納入可編輯範圍統計
+      const total = DATA.entries.filter(e => e.editable || isAdmin).length;
+      const edited = DATA.entries.filter(e => (e.editable || isAdmin) && edits[e.row] !== undefined && edits[e.row] !== e.content).length;
+      const el = document.getElementById('stats');
+      if (el) el.textContent = '已修改 ' + edited + ' / ' + total + ' 項';
+      updatePendingBadge();
+    }
+
+    /* ─── A+B：未送出防呆（beforeunload + 浮動徽章 + 閒置提醒） ─── */
+    function countPending() {
+      const edited = DATA.entries.filter(e => (e.editable || isAdmin) && edits[e.row] !== undefined && edits[e.row] !== e.content).length;
+      const reset  = DATA.entries.filter(e => (e.editable || isAdmin) && resets.has(e.row)).length;
+      return edited + reset;
+    }
+
+    function updatePendingBadge(successMode) {
+      let b = document.getElementById('pendingBadge');
+      if (!b) {
+        b = document.createElement('div');
+        b.id = 'pendingBadge';
+        b.style.cssText = 'position:fixed;top:14px;right:14px;padding:8px 14px;border-radius:18px;font-size:13px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.2);z-index:9999;cursor:pointer;display:none;transition:background .3s;color:#fff;';
+        b.onclick = () => {
+          const btn = document.querySelector('.btn-submit');
+          if (btn) btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        };
+        document.body.appendChild(b);
+      }
+      if (successMode) {
+        b.style.background = '#16a34a';
+        b.textContent = '✅ 已送出雲端';
+        b.style.display = 'block';
+        clearTimeout(b._t);
+        b._t = setTimeout(() => { b.style.display = 'none'; }, 3000);
+        return;
+      }
+      const n = countPending();
+      if (n > 0) {
+        b.style.background = '#dc2626';
+        b.textContent = '⚠️ 有 ' + n + ' 項未送出（點此前往送出）';
+        b.style.display = 'block';
+      } else {
+        b.style.display = 'none';
+      }
+    }
+
+    let idleReminderTimer = null;
+    function scheduleIdleReminder() {
+      if (idleReminderTimer) clearTimeout(idleReminderTimer);
+      idleReminderTimer = setTimeout(() => {
+        const n = countPending();
+        if (n > 0) showIdleToast('⚠️ 您有 ' + n + ' 項修改尚未送出，記得點「送出」同步到雲端');
+      }, 180000); // 3 分鐘
+    }
+
+    function showIdleToast(msg) {
+      let t = document.getElementById('idleToast');
+      if (!t) {
+        t = document.createElement('div');
+        t.id = 'idleToast';
+        t.style.cssText = 'position:fixed;bottom:80px;right:20px;background:#f59e0b;color:#fff;padding:12px 18px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.25);z-index:9999;font-size:14px;transition:opacity .3s;cursor:pointer;max-width:300px;';
+        t.onclick = () => { t.style.opacity = '0'; setTimeout(() => t.style.display = 'none', 300); };
+        document.body.appendChild(t);
+      }
+      t.textContent = msg;
+      t.style.display = 'block';
+      t.style.opacity = '1';
+      clearTimeout(t._t);
+      t._t = setTimeout(() => {
+        t.style.opacity = '0';
+        setTimeout(() => t.style.display = 'none', 300);
+      }, 8000);
+    }
+
+    window.addEventListener('beforeunload', function(e) {
+      if (countPending() > 0) {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      }
+    });
+
+    function handleSubmit() {
+      // 1. 類型A：使用者有修改且與雲端值不同的項目（admin 可改固定卡片）
+      const editedItems = DATA.entries.filter(e =>
+        (e.editable || isAdmin) &&
+        edits[e.row] !== undefined &&
+        edits[e.row] !== e.content
+      ).map(e => ({
+        row: e.row,
+        phase: PHASE_LABELS[e.phase] ? PHASE_LABELS[e.phase].short : e.phase,
+        event: e.event.replace(/\n/g, ' '),
+        dept: e.dept,
+        content: edits[e.row]
+      }));
+
+      // 2. 類型B：使用者明確按過「還原」的項目，送回初始預設值
+      const resetItems = DATA.entries.filter(e =>
+        (e.editable || isAdmin) && resets.has(e.row)
+      ).map(e => ({
+        row: e.row,
+        phase: PHASE_LABELS[e.phase] ? PHASE_LABELS[e.phase].short : e.phase,
+        event: e.event.replace(/\n/g, ' '),
+        dept: e.dept,
+        content: e.content
+      }));
+
+      const payload = [...editedItems, ...resetItems];
+
+      // 沒有任何修改或還原，不送出
+      if (payload.length === 0) {
+        alert('目前沒有修改或還原的項目，無需送出。');
+        return;
+      }
+
+      // ★★★ Google Apps Script 網址（統一宣告在頁面底部） ★★★
+      if (typeof SCRIPT_URL === 'undefined' || SCRIPT_URL === "###請填入你的_GAS_網址###") {
+        alert("請先在原始碼中填入你的 Google Apps Script 部署網址！");
+        return;
+      }
+
+      // 執行傳送 (優化版：背景非同步上傳，不卡死畫面)
+      const submitButton = document.querySelector('.btn-submit');
+      const originalText = submitButton.innerText;
+
+      // 按鈕瞬間變換提示，讓使用者知道有點到
+      submitButton.innerText = "✅ 已排程...";
+      setTimeout(() => {
+        submitButton.innerText = originalText;
+      }, 1500);
+
+      // 在右下角顯示背景上傳提示
+      let syncStatus = document.getElementById('syncStatus');
+      if (!syncStatus) {
+        syncStatus = document.createElement('div');
+        syncStatus.id = 'syncStatus';
+        document.body.appendChild(syncStatus);
+      }
+      syncStatus.style.opacity = '1';
+      syncStatus.innerHTML = '🔄 背景資料上傳中... 您可繼續其他操作';
+      syncStatus.style.cssText = 'position:fixed; bottom:20px; right:20px; background:rgba(0,0,0,0.7); color:#fff; padding:8px 16px; border-radius:20px; font-size:13px; z-index:999; box-shadow:0 2px 8px rgba(0,0,0,0.2); transition: opacity 0.5s;';
+
+      fetch(SCRIPT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8"
+        },
+        body: JSON.stringify({ action: "saveContent", items: payload })
+      })
+        .then(res => res.json())
+        .then(result => {
+          if (result.status === "success") {
+            // 送出成功後：將已送出的內容更新到 e.content，並從 edits 移除
+            // 確保下次 submit 不會重複帶上這些記錄
+            payload.forEach(item => {
+              const target = DATA.entries.find(e => e.row === item.row);
+              if (target) target.content = item.content;
+              delete edits[item.row];
+            });
+            persistEdits();
+            resets.clear();
+            updatePendingBadge(true);
+            if (idleReminderTimer) { clearTimeout(idleReminderTimer); idleReminderTimer = null; }
+            syncStatus.innerHTML = '✅ 雲端上傳成功！';
+            syncStatus.style.background = 'rgba(27, 94, 32, 0.85)';
+          } else {
+            syncStatus.innerHTML = '⚠️ 上傳失敗：' + result.message;
+            syncStatus.style.background = 'rgba(198, 40, 40, 0.85)';
+          }
+          // 3秒後淡出隱藏
+          setTimeout(() => {
+            syncStatus.style.opacity = '0';
+          }, 3000);
+        })
+        .catch(error => {
+          console.error("Error!", error);
+          syncStatus.innerHTML = '⚠️ 上傳時發生錯誤，請檢查網路';
+          syncStatus.style.background = 'rgba(198, 40, 40, 0.85)';
+          setTimeout(() => {
+            syncStatus.style.opacity = '0';
+          }, 3000);
+        });
+    }
+
+    function exportToExcel() {
+      if (typeof XLSX === 'undefined') {
+        alert('正在載入 Excel 匯出模組，請稍後再試！');
+        return;
+      }
+
+      const wb = XLSX.utils.book_new();
+
+      for (let p = 1; p <= 8; p++) {
+        const phaseEntries = DATA.entries
+          .filter(e => e.phase === p && !e.isIntro && !e.deleted)
+          .slice()
+          .sort((a, b) => (a.order || 0) - (b.order || 0));
+
+        const wsData = [];
+
+        // 設定表頭與其樣式
+        const headerStyle = {
+          font: { bold: true, color: { rgb: "FFFFFF" } },
+          fill: { fgColor: { rgb: "4F81BD" } }, // 預設藍色表頭
+          alignment: { horizontal: "center", vertical: "center" },
+          border: { bottom: { style: "thin", color: { auto: 1 } } }
+        };
+        wsData.push([
+          { v: "事件/項目", t: "s", s: headerStyle },
+          { v: "負責部會", t: "s", s: headerStyle },
+          { v: "演練內容", t: "s", s: headerStyle }
+        ]);
+
+        phaseEntries.forEach(e => {
+          const content = edits[e.row] !== undefined ? edits[e.row] : e.content;
+          const evtText = e.event ? e.event.replace(/\n/g, ' ') : "";
+          const deptText = e.dept || "";
+          const contentText = content ? content.toString() : "";
+
+          let rowStyle = {
+            alignment: { wrapText: true, vertical: "top" }
+          };
+
+          // 若為固定腳本 (不可編輯)
+          if (!e.editable) {
+            if (deptText.includes("環境部")) {
+              // 綠色 (環境部)
+              rowStyle.fill = { fgColor: { rgb: "E2EFDA" } };
+              rowStyle.font = { color: { rgb: "375623" } };
+            } else {
+              // 紅色 (其他部會)
+              rowStyle.fill = { fgColor: { rgb: "FCE4D6" } };
+              rowStyle.font = { color: { rgb: "C00000" } };
+            }
+          }
+
+          wsData.push([
+            { v: evtText, t: "s", s: rowStyle },
+            { v: deptText, t: "s", s: rowStyle },
+            { v: contentText, t: "s", s: rowStyle }
+          ]);
+        });
+
+        if (phaseEntries.length === 0) { // 實際為0筆
+          wsData.push(["無", "無", "此階段無須填寫或暫無負責事項"]);
+        }
+
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        // 設定欄寬
+        ws['!cols'] = [{ wch: 25 }, { wch: 20 }, { wch: 70 }];
+
+        let sheetName = PHASE_LABELS[p] ? PHASE_LABELS[p].short : `階段${p}`;
+        XLSX.utils.book_append_sheet(wb, ws, sheetName);
+      }
+
+      XLSX.writeFile(wb, "40℃高溫即時調適行動演練_總腳本.xlsx");
+    }
+
+    /* ─── Admin banner 事件綁定 ─── */
+    function bindAdminBanner() {
+      const banner = document.getElementById('adminBanner');
+      if (!banner) return;
+      banner.style.display = isAdmin ? 'flex' : 'none';
+      if (!isAdmin) return;
+
+      const toggleBtn = document.getElementById('toggleShowDeleted');
+      const exitBtn = document.getElementById('adminExit');
+      if (toggleBtn) {
+        toggleBtn.onclick = () => {
+          showDeleted = !showDeleted;
+          toggleBtn.classList.toggle('active', showDeleted);
+          toggleBtn.textContent = showDeleted ? '✓ 顯示已刪除' : '顯示已刪除';
+          render();
+        };
+      }
+      if (exitBtn) {
+        exitBtn.onclick = () => {
+          const url = new URL(location.href);
+          url.searchParams.delete('admin');
+          location.href = url.toString();
+        };
+      }
+    }
+
+    // ★★★ 共通之 Google Apps Script 佈署網址 ★★★
+    const SCRIPT_URL = "###YOUR_GOOGLE_APPS_SCRIPT_URL###"; // 請換成你自己的 Google Apps Script 部署網址
+
+    // ★★★ 初始化：向雲端抓取最新資料 ★★★
+    function initApp() {
+      // 1. 先立即渲染本地已知畫面 (預設腳本 + LocalStorage 暫存)，達成「零等待」開啟
+      if (isAdmin) document.body.classList.add('admin');
+      bindAdminBanner();
+      initTabs();
+      initDeptFilter();
+      render();
+
+      // 在右上角加入一個小小的同步狀態提示
+      const syncStatus = document.createElement('div');
+      syncStatus.id = 'syncStatus';
+      syncStatus.innerHTML = '🔄 雲端同步中...';
+      syncStatus.style.cssText = 'position:fixed; bottom:20px; right:20px; background:rgba(0,0,0,0.7); color:#fff; padding:8px 16px; border-radius:20px; font-size:13px; z-index:999; box-shadow:0 2px 8px rgba(0,0,0,0.2); transition: opacity 0.5s;';
+      document.body.appendChild(syncStatus);
+
+      // 2. 使用 GET 請求並帶上參數 ?action=getData 讓後端辨識
+      fetch(SCRIPT_URL + "?action=getData")
+        .then(res => res.json())
+        .then(serverData => {
+          if (serverData && serverData.length > 0) {
+            let hasUpdate = false;
+            // 將雲端資料覆蓋本地預設資料
+            serverData.forEach(item => {
+              const target = DATA.entries.find(e => e.row === item.row);
+              if (target) {
+                // 可編輯卡片：雲端內容永遠覆蓋本地（即使是空字串，代表使用者清空）
+                // 固定卡片：僅當雲端有非空內容時才覆蓋（admin 編輯過的固定腳本）；
+                //          空字串保留 index.html 預設值，避免洗掉未被編輯的固定腳本
+                const cloudHasContent = typeof item.content === 'string' && item.content !== '';
+                const shouldOverride = target.editable
+                  ? typeof item.content === 'string'
+                  : cloudHasContent;
+                if (shouldOverride && target.content !== item.content) {
+                  target.content = item.content;
+                  hasUpdate = true;
+                }
+                // 結構欄位（order / deleted）若雲端有值，覆蓋本地（所有卡片皆適用）
+                if (typeof item.order === 'number' && target.order !== item.order) {
+                  target.order = item.order;
+                  hasUpdate = true;
+                }
+                if (typeof item.deleted === 'boolean' && target.deleted !== item.deleted) {
+                  target.deleted = item.deleted;
+                  hasUpdate = true;
+                }
+                // 如果雲端資料已經和本地存檔不同，清除本地與其衝突的暫存，避免標籤錯亂
+                if (shouldOverride && edits[item.row] !== undefined && edits[item.row] !== item.content) {
+                  delete edits[item.row];
+                  hasUpdate = true;
+                }
+              } else if (item.phase && item.dept) {
+                // ★ 雲端有、本地沒有 → 這是管理員新增的自訂卡片，動態注入
+                const phaseNum = parseInt(item.phase) || item.phase;
+                // 嘗試將「短名稱」（如「階段二」）對應回數字
+                let phaseInt = typeof phaseNum === 'number' ? phaseNum : null;
+                if (!phaseInt) {
+                  for (const [k, v] of Object.entries(PHASE_LABELS)) {
+                    if (v.short === item.phase) { phaseInt = parseInt(k); break; }
+                  }
+                }
+                if (phaseInt) {
+                  const fillVal = (item.fill === 'blue' || item.fill === 'green') ? item.fill : 'yellow';
+                  DATA.entries.push({
+                    row:      item.row,
+                    phase:    phaseInt,
+                    id:       'custom-' + item.row,
+                    event:    item.event  || '自訂項目',
+                    dept:     item.dept,
+                    content:  item.content || '',
+                    editable: fillVal === 'yellow',
+                    fill:     fillVal,
+                    isIntro:  false,
+                    order:    typeof item.order === 'number' ? item.order : 0,
+                    deleted:  item.deleted || false,
+                    isCustom: true
+                  });
+                  hasUpdate = true;
+                }
+              }
+            });
+            if (hasUpdate) {
+              persistEdits(); // 更新暫存
+              render(); // 資料變更後重新渲染（依當前頁面正確選擇渲染方式）
+            }
+          } else {
+            // 雲端為空時，清除所有本地 edits，避免舊記錄被誤判為待送出的修改
+            if (Object.keys(edits).length > 0) {
+              edits = {};
+              persistEdits();
+              render();
+            }
+          }
+          syncStatus.innerHTML = '✅ 已同步最新資料';
+          syncStatus.style.background = 'rgba(27, 94, 32, 0.85)';
+          setTimeout(() => {
+            syncStatus.style.opacity = '0';
+            setTimeout(() => syncStatus.remove(), 500);
+          }, 3000);
+        })
+        .catch(err => {
+          console.warn("無法取得雲端資料或遠端無資料，載入本地預設腳本。", err);
+          syncStatus.innerHTML = '⚠️ 離線模式，載入本地腳本';
+          syncStatus.style.background = 'rgba(198, 40, 40, 0.85)';
+          setTimeout(() => {
+            syncStatus.style.opacity = '0';
+            setTimeout(() => syncStatus.remove(), 500);
+          }, 3000);
+        });
+    }
+
+    // 執行啟動函式
+    initApp();
+  </script>
+</body>
+
+</html>
