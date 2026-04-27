@@ -1824,6 +1824,36 @@
   </div>
 
   <script>
+    /* ═══════════════════════════════════════════════════
+       ★ 文字設定區 — 只需修改這裡即可更換全站顯示文字
+    ═══════════════════════════════════════════════════ */
+    const CONFIG = {
+      // 瀏覽器標籤
+      pageTitle:      "40℃高溫即時調適行動演練 — 腳本協作平台",
+      // 左側欄
+      brandIcon:      "🌡️",
+      brandTitle:     "40℃ 高溫演練",
+      brandSub:       "腳本協作平台 · 115年度",
+      // 頂部 Header
+      headerTitle:    "40℃ 高溫即時調適行動演練",
+      headerSub:      "跨部會腳本協作平台",
+      // 首頁 Hero
+      heroLabel:      "115年度 · 40℃高溫即時調適行動演練",
+      heroTitle:      "各部會腳本協作平台",
+      heroDesc:       "本平台提供各部會在 40℃ 極端高溫複合災害情境下，逐一確認與撰寫各階段的調適行動腳本。\n請各部會依據自身業務，填寫實際作業內容，以完成本次演練腳本初版。",
+      // 情境時序圖
+      timelineTitle:  "高溫 40°C 演練情境與事件時序",
+      timelineSub:    "台北市內湖區 ／ 新北市五股區 ／ 桃園市蘆竹區",
+    };
+
+    // 套用設定
+    document.title = CONFIG.pageTitle;
+    document.querySelector('.brand-icon').textContent  = CONFIG.brandIcon;
+    document.querySelector('.brand-title').textContent = CONFIG.brandTitle;
+    document.querySelector('.brand-sub').textContent   = CONFIG.brandSub;
+    document.querySelector('.header h1').textContent   = CONFIG.headerTitle;
+    document.querySelector('.header .sub').textContent = CONFIG.headerSub;
+
     const DATA = {
       "phases": [
         {
@@ -4435,9 +4465,9 @@
       const html = `
   <div class="intro-page">
     <div class="intro-hero">
-      <div class="label">115年度 · 40℃高溫即時調適行動演練</div>
-      <h2>各部會腳本協作平台</h2>
-      <p>本平台提供各部會在 40℃ 極端高溫複合災害情境下，逐一確認與撰寫各階段的調適行動腳本。\n請各部會依據自身業務，填寫實際作業內容，以完成本次演練腳本初版。</p>
+      <div class="label">${CONFIG.heroLabel}</div>
+      <h2>${CONFIG.heroTitle}</h2>
+      <p>${CONFIG.heroDesc}</p>
       ${bgDesc ? `<div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid rgba(255, 255, 255, 0.2);">
         <h3 style="font-size: 18px; margin-bottom: 8px; font-weight: 700; color: #fff;">演練背景說明</h3>
         <p>${escHtml(bgDesc.content).replace(/\n+/g, '\n')}</p>
@@ -4445,8 +4475,8 @@
     </div>
 
     <div class="ht-timeline">
-      <div class="ht-title">高溫 40°C 演練情境與事件時序</div>
-      <div class="ht-sub">台北市內湖區 ／ 新北市五股區 ／ 桃園市蘆竹區</div>
+      <div class="ht-title">${CONFIG.timelineTitle}</div>
+      <div class="ht-sub">${CONFIG.timelineSub}</div>
       <div class="ht-divider"></div>
       <div class="ht-sev-row"><div class="ht-sev-line"></div><div class="ht-sev-arrow"></div></div>
       <div class="ht-sev-labels">
